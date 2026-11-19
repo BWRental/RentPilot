@@ -1985,7 +1985,7 @@ function echL(a){const cds=cdesOf(a),lots=cds.flatMap(c=>c.lots.map(l=>Object.as
   const nx=LL[i+1]&&ecD(LL[i+1].debut)||'',cut=[nx,R].filter(Boolean).sort()[0]||'',loy=+l.loyer||0,ok=l.u&&+l.dur>0,s0=i===0?(FB||l.debut):l.debut;
   if(!ok)err.push(`périodicité du lot location (commande ${nm})`);if(!loy)err.push(`loyer du lot location (commande ${nm})`);
   const fin=ok&&+l.nb>0?stepE(s0,l,+l.nb):'';l._fin=fin;l._s0=s0;l._cut=cut;
-  if(ok)for(let k=0;k<3000;k++){const s=stepE(s0,l,k),e=stepE(s0,l,k+1);if(cut&&s>=cut)break;if((!fin||s>=fin)&&s>lim)break;
+  if(ok)for(let k=0;k<3000;k++){const s=stepE(s0,l,k),e=stepE(s0,l,k+1);if(cut&&s>=cut)break;if(!cut&&(!fin||s>=fin)&&s>lim)break;
    const full=EC.n(e)-EC.n(s),pr=!!cut&&cut<e,days=pr?EC.n(cut)-EC.n(s):full,rate=l.u==='M'?loy/full:loy/(l.dur*(l.u==='S'?7:1));
    L.push({t:'L',l,c:l.c,n:k+1,k:l.id+':L'+(k+1),s,e:pr?cut:e,days,full,pr,rate,base:pr?ecR(rate*days):loy,ff:l.u==='J',hors:!!fin&&s>=fin,mDef:s.slice(0,7)})}});
  const s0=LL[0]&&LL[0]._s0||'';
