@@ -2039,6 +2039,8 @@ function gpTxt(a,x){const g=GP(),c=x.c,dv=[c.devis,c.rev].filter(Boolean).join('
 const gpMt=v=>String(ecR(v)).replace('.',',');
 /* --- rendu --- */
 let ECALL=false,ECED=null,ECGP=null;
+/* à facturer seulement une fois la fin de période (loyer) ou la date de réalisation (connexes, autres) dépassée */
+const ecDue=x=>!!x.due&&x.due<EC.td();
 const ecLib=x=>x.t==='A'?'Connexes aller':x.t==='R'?'Connexes retour':x.t==='X'?'Autre prestation':(x.ff?'Loyer (forfait)':'Loyer');
 /* formulaire : en-tête + lots */
 function ecLotL(a,l,dis){const v=k=>esc(l[k]??''),g=GP();
@@ -2086,7 +2088,7 @@ function ecBodyH(a,pv){const ro=!CAN()||!!pv,X=echL(a),cm=EC.td().slice(0,7);let
  if(X.al.length)h+=`<div class="ecal">${X.al.map(x=>`<p>⚠ ${esc(x[1])}</p>`).join('')}</div>`;
  const L=X.L,sum=f=>L.filter(f).reduce((m,x)=>m+x.v,0),fac=L.filter(x=>x.f),hid=!ECALL&&fac.length>4?fac.slice(0,fac.length-3):[],sh=L.filter(x=>!hid.includes(x));
  h+=`<p class="sub" style="margin:10px 0 4px">${X.R?`Facturation jusqu’au ${EC.f(X.R)}`:`Sans fin de facturation : loyers comptés jusqu’à la fin du mois (${EC.f(X.lim)})`} · cocher « Enregistré » ou « Facturé » met à jour les dates « jusqu’au » de la Facturation.</p>
- <div class="ect"><span>Total ${EC.e(sum(()=>1))}</span><span class="pill r">À enregistrer ${EC.e(sum(x=>!x.en&&!x.prev))}</span><span class="pill a">Enregistré non facturé ${EC.e(sum(x=>x.en&&!x.f))}</span><span class="pill ok">Facturé ${EC.e(sum(x=>x.f))}</span><span class="pill b">dont connexes ${EC.e(sum(x=>x.t!=='L'))}</span>${sum(x=>x.prev)?`<span class="pill g">Prévu ${EC.e(sum(x=>x.prev))}</span>`:''}</div>
+ <div class="ect"><span>Total ${EC.e(sum(()=>1))}</span><span class="pill r">À enregistrer ${EC.e(sum(x=>!x.en&&!x.prev))}</span><span class="pill a" title="Enregistré, fin de période (ou date de réalisation) dépassée">À facturer ${EC.e(sum(x=>x.en&&!x.f&&ecDue(x)))}</span>${sum(x=>x.en&&!x.f&&!ecDue(x))?`<span class="pill g" title="Enregistré, à facturer une fois la fin de période (ou la date de réalisation) dépassée">Enregistré, à facturer plus tard ${EC.e(sum(x=>x.en&&!x.f&&!ecDue(x)))}</span>`:''}<span class="pill ok">Facturé ${EC.e(sum(x=>x.f))}</span><span class="pill b">dont connexes ${EC.e(sum(x=>x.t!=='L'))}</span>${sum(x=>x.prev)?`<span class="pill g">Prévu ${EC.e(sum(x=>x.prev))}</span>`:''}</div>
  ${hid.length?`<button class="btn sm" data-ecall="1" style="margin:4px 0">Afficher les ${hid.length} lignes plus anciennes (facturées)</button>`:ECALL&&fac.length>4?`<button class="btn sm" data-ecall="0" style="margin:4px 0">Masquer les lignes anciennes</button>`:''}`;
  const row=x=>{const per=x.t==='L'?`${EC.f(x.s)} → ${EC.f(x.e)}<br><span class="sub">${x.ff?'forfait · ':''}${x.days} j${x.pr?` sur ${x.full} (prorata)`:''}</span>${x.hors?'<br><span class="pill r ec2">hors commande</span>':''}`:x.t==='A'?`${x.s?'Réalisé le '+EC.f(x.s):'Date ?'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`:x.t==='X'?`${x.s?'Le '+EC.f(x.s):'Date ?'}<br><span class="sub">${esc(((x.au.d||'').split('\n')[0]||'—').slice(0,60))}</span>`:`${x.s?'Retour le '+EC.f(x.s):'Retour non planifié'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`;
   const mo=x.t==='L'?`${EC.mois(x.m)}${x.dbl>1?`<br><span class="pill a ec2">${x.dbl} tranches ce mois-ci</span>`:''}`:`<input type="month" data-lm="${x.k}" value="${x.m}" ${ro?'disabled':''} aria-label="Mois d’enregistrement">`;
@@ -2132,7 +2134,7 @@ function ecPlace(){const S=[...document.querySelectorAll('#da section.pn')],h=r=
  const pl=$('#plp'),dp=$('#docp');if(pl&&dp&&dp.previousElementSibling!==pl)dp.before(pl)}
 /* récapitulatif de l'échéancier sur la carte de la liste */
 function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L.length)return'';const s=f=>EC.e(L.filter(f).reduce((m,x)=>m+x.v,0)),pv=L.some(x=>x.prev);
- return`<div class="eccr"><span class="pill r">À enregistrer ${s(x=>!x.en&&!x.prev)}</span><span class="pill a">Enregistré non facturé ${s(x=>x.en&&!x.f)}</span><span class="pill ok">Facturé ${s(x=>x.f)}</span><span class="pill b">dont connexes ${s(x=>x.t!=='L')}</span>${pv?`<span class="pill g">Prévu ${s(x=>x.prev)}</span>`:''}</div>`}catch(e){return''}}
+ return`<div class="eccr"><span class="pill r">À enregistrer ${s(x=>!x.en&&!x.prev)}</span><span class="pill a">À facturer ${s(x=>x.en&&!x.f&&ecDue(x))}</span>${L.some(x=>x.en&&!x.f&&!ecDue(x))?`<span class="pill g">À facturer plus tard ${s(x=>x.en&&!x.f&&!ecDue(x))}</span>`:''}<span class="pill ok">Facturé ${s(x=>x.f)}</span><span class="pill b">dont connexes ${s(x=>x.t!=='L')}</span>${pv?`<span class="pill g">Prévu ${s(x=>x.prev)}</span>`:''}</div>`}catch(e){return''}}
 /* une coche → trace dans l'historique */
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
