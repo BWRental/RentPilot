@@ -260,6 +260,7 @@ h5.plsep{margin:12px 0 2px;font-size:13px;color:var(--mu)}
 .ecdtb{border:0;background:none;color:var(--mu);cursor:pointer;padding:0 4px;margin:0 0 0 2px;font-size:13px;line-height:1.2}.ecdtb:hover{color:var(--pri)}.ecdti{font:inherit;font-size:12.5px;padding:2px 4px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink)}
 .gplg{display:inline-flex;align-items:center;gap:6px;margin-left:12px;font-weight:400;font-size:12.5px;color:var(--mu)}.gplg .btn{margin:0}
 .mgsug{border:1px dashed var(--ln);border-radius:8px;padding:8px 10px;margin:8px 0 10px;font-size:13px;display:grid;gap:6px}.mgsug .btn{margin-left:4px}
+.pvraw{margin-top:4px;font-size:11.5px}.pvraw summary{cursor:pointer;color:var(--mu)}.pvraw pre{max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:var(--hov,rgba(127,127,127,.08));padding:6px;border-radius:6px;margin:4px 0 0}
 /* tableau de bord */
 .kpbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
 .kpseg{display:flex}.kpseg .btn{border-radius:0}.kpseg .btn:first-child{border-radius:8px 0 0 8px}.kpseg .btn:last-child{border-radius:0 8px 8px 0}
@@ -2237,7 +2238,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='23/11/2026 16h30';
+const RP_VER='23/11/2026 17h40';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -2612,35 +2613,37 @@ $('#da').addEventListener('click',async e=>{const t=e.target.closest('button');i
    rouge une fois l'échéance dépassée — mêmes règles que les triangles du Gantt RentPlanner. */
 const PVS=[[/to.?plan|to be planned|planifier|a_planifier/i,'À planifier','r'],[/wait|report|rapport|attente/i,'Attente rapport','a'],[/complet|done|effectu|termin/i,'Effectuée','ok'],[/plan/i,'Planifiée','b']];
 function pvSt(v){const t=String(v||'');for(const[re,l,c]of PVS)if(re.test(t))return{l,c,k:l};return t?{l:t,c:'g',k:t}:{l:'—',c:'g',k:''}}
-function pvVisits(as){const raw=[...(Array.isArray(as&&as.visits)?as.visits:[])];const pv=as&&as.pv||{};Object.values(pv).forEach(v=>{if(Array.isArray(v))raw.push(...v)});
+function pvVisits(as){const raw=[...(Array.isArray(as&&as.visits)?as.visits:[])];const pv=as&&as.pv||{};Object.entries(pv).forEach(([k,v])=>{if(Array.isArray(v))v.forEach((x,i)=>{if(x&&typeof x==='object')raw.push({_t:k,_i:i,...x})})});raw.forEach((x,i)=>{if(x&&typeof x==='object'&&x._i==null)x._i=i});
  return raw.filter(v=>v&&typeof v==='object').map(v=>{const K=Object.keys(v),f=re=>K.find(k=>re.test(k)),dk=K.find(k=>/date/i.test(k)&&!/(creat|updat|modif)/i.test(k))||f(/^(date|day|at)$/i),
   kind=[v._t,v[f(/^(kind|type|category|visit_type|nature)$/i)]].filter(Boolean).join(' '),st=pvSt(v[f(/status|state|statut/i)]);
-  return{q:/requal/i.test(kind)?'Q':'I',date:ecD(v[dk]),st,com:String(v[f(/comment|note|remark|observ/i)]||'').trim()}}).filter(v=>v.date||v.com).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
+  return{q:/requal/i.test(kind)?'Q':'I',date:ecD(v[dk]),st,com:String(v[f(/comment|note|remark|observ/i)]||'').trim(),i:v._i||0,raw:v}}).filter(v=>v.date||v.com||v.st.k).sort((a,b)=>(b.date||'9999').localeCompare(a.date||'9999')||b.i-a.i)}
 function pvOf(as){const pv=as&&as.pv||{},K=Object.keys(pv),f=(re,no)=>K.find(k=>re.test(k)&&!(no&&no.test(k)));
  const tg=f(/(enab|visit|period|(^|_)pv($|_))/i,/(date|freq|alert|month)/i);if(tg&&pv[tg]===false)return null;
  const d=k=>k&&ecD(pv[k])||'',n=k=>k&&pv[k]!=null&&pv[k]!==''&&!isNaN(+pv[k])?+pv[k]:null,td=EC.td();
- const mk=(t,last,freq,al)=>{if(!last)return null;const nx=freq>0?EC.am(last,freq):'',st=!nx?'':td>=nx?'r':(al!=null&&al>=0&&td>=EC.am(nx,-al))?'a':'ok';return{t,last,freq,al,nx,st}};
+ const mk=(t,last,freq,al)=>{if(!last)return null;/* */const nx=freq>0?EC.am(last,freq):'',st=!nx?'':td>=nx?'r':(al!=null&&al>=0&&td>=EC.am(nx,-al))?'a':'ok';return{t,last,freq,al,nx,st}};
  const VS=pvVisits(as),lastDone=q=>(VS.find(v=>v.q===q&&v.st.l==='Effectuée'&&v.date)||{}).date||'';
- const I=mk('I',d('last_inspection_date')||lastDone('I')||d(f(/insp.*date|date.*insp/i,/requal/i)),n(f(/insp.*freq|freq.*insp/i,/requal/i))??n(f(/freq/i,/requal/i)),n(f(/insp.*alert|alert.*insp/i,/requal/i))??n(f(/alert/i,/requal/i)));
- const Q=mk('Q',d('last_requalification_date')||lastDone('Q')||d(f(/requal.*date|date.*requal/i)),n('requal_freq_months')??n(f(/requal.*freq/i)),n('requal_alert_months')??n(f(/requal.*alert/i)));
- [I,Q].forEach(e=>{if(!e)return;e.vis=VS.filter(v=>v.q===e.t);e.open=e.vis.filter(v=>v.st.l!=='Effectuée').sort((a,b)=>(a.date||'9').localeCompare(b.date||'9'))[0]||null});
+ const I=mk('I',lastDone('I')||d('last_inspection_date')||d(f(/insp.*date|date.*insp/i,/requal/i)),n(f(/insp.*freq|freq.*insp/i,/requal/i))??n(f(/freq/i,/requal/i)),n(f(/insp.*alert|alert.*insp/i,/requal/i))??n(f(/alert/i,/requal/i)));
+ const Q=mk('Q',lastDone('Q')||d('last_requalification_date')||d(f(/requal.*date|date.*requal/i)),n('requal_freq_months')??n(f(/requal.*freq/i)),n('requal_alert_months')??n(f(/requal.*alert/i)));
+ [I,Q].forEach(e=>{if(!e)return;e.vis=VS.filter(v=>v.q===e.t);e.lastV=e.vis[0]||null;e.open=e.lastV&&e.lastV.st.l!=='Effectuée'?e.lastV:null});
  return I||Q?{I,Q}:null}
 const PVL={I:'Inspection périodique',Q:'Requalification'};
+/* données reçues de RentPlanner pour l'asset (pour vérifier une différence avec RentPlanner) */
+function pvRaw(as){try{const o={pv:as.pv||{},visits:as.visits||[]};if(!Object.keys(o.pv).length&&!o.visits.length)return'';const t=JSON.stringify(o,null,1);return`<details class="pvraw"><summary>données RentPlanner</summary><pre>${esc(t.length>4000?t.slice(0,4000)+'…':t)}</pre></details>`}catch(e){return''}}
 function pvLoc(a){try{if(typeof plProj!=='function')return[];const p=plProj(a);if(!p)return[];
   return plRows(p).filter(x=>!PLX.has(x.as.type)&&!(x.workshop_return||x.transfer_to_next)).map(x=>({x,as:x.as,v:pvOf(x.as)})).filter(o=>o.v)}catch(e){return[]}}
 const pvDuring=(a,nx)=>{const r=ecD(a.retour);return!!nx&&nx>=EC.td()&&(!r||nx<r)};
-function pvCell(a,e){if(!e)return'<span class="sub">—</span>';if(!e.nx)return`<span class="sub">dernière ${EC.f(e.last)} · fréquence non renseignée</span>${pvVisH(e)}`;
- const lab=e.st==='r'?'dépassée':e.st==='a'?'à prévoir':'';return`<b>${EC.f(e.nx)}</b>${lab?` <span class="pill ${e.st==='r'?'r':'a'} ec2">${lab}</span>`:''}${pvDuring(a,e.nx)?' <span class="pill b ec2" title="L’échéance tombe avant la date de retour">pendant la location</span>':''}${e.open?` <span class="pill ${e.open.st.c} ec2" title="${esc(e.open.com||'')}">${esc(e.open.st.l)}${e.open.date?' le '+EC.f(e.open.date):''}</span>`:''}<br><span class="sub">dernière ${EC.f(e.last)} · tous les ${e.freq} mois${e.al!=null?` · alerte ${e.al} mois avant`:''}</span>${pvVisH(e)}`}
+function pvCell(a,e){if(!e)return'<span class="sub">—</span>';if(!e.nx)return`<span class="sub">dernière ${EC.f(e.last)} · fréquence non renseignée</span>${e.open?`<br><span class="pill ${e.open.st.c} ec2">Dernière visite : ${esc(e.open.st.l)}${e.open.date?' le '+EC.f(e.open.date):''}</span>${e.open.com?`<br><span class="sub">💬 ${esc(e.open.com)}</span>`:''}`:''}${pvVisH(e)}`;
+ const lab=e.st==='r'?'dépassée':e.st==='a'?'à prévoir':'';return`<b>${EC.f(e.nx)}</b>${lab?` <span class="pill ${e.st==='r'?'r':'a'} ec2">${lab}</span>`:''}${pvDuring(a,e.nx)?' <span class="pill b ec2" title="L’échéance tombe avant la date de retour">pendant la location</span>':''}${e.open?`<br><span class="pill ${e.open.st.c} ec2">Dernière visite : ${esc(e.open.st.l)}${e.open.date?' le '+EC.f(e.open.date):''}</span>${e.open.com?`<br><span class="sub">💬 ${esc(e.open.com)}</span>`:''}`:''}<br><span class="sub">dernière ${EC.f(e.last)} · tous les ${e.freq} mois${e.al!=null?` · alerte ${e.al} mois avant`:''}</span>${pvVisH(e)}`}
 function pvVisH(e){if(!e||!e.vis||!e.vis.length)return'';return`<details class="pvv"><summary>${e.vis.length} visite${e.vis.length>1?'s':''}</summary>${e.vis.slice(0,6).map(v=>`<div><span class="pill ${v.st.c} ec2">${esc(v.st.l)}</span> ${v.date?EC.f(v.date):'date ?'}${v.com?` · <span class="sub">${esc(v.com)}</span>`:''}</div>`).join('')}</details>`}
 function pvH(a){const L=pvLoc(a);if(!L.length)return`<div class="pvb"><h5>🔎 Visites / inspections périodiques</h5><p class="sub">Aucune date d’inspection périodique ou de requalification dans RentPlanner pour les assets sur site.</p></div>`;
- return`<div class="pvb"><h5>🔎 Visites / inspections périodiques</h5><div class="tw"><table class="ectb"><thead><tr><th>Asset</th><th>Prochaine inspection périodique</th><th>Prochaine requalification</th></tr></thead><tbody>${L.map(o=>`<tr><td><b>${esc(o.as.name||'')}</b><br><span class="sub">${esc(eqLab(o.as)||o.as.type||'')}</span></td><td>${pvCell(a,o.v.I)}</td><td>${pvCell(a,o.v.Q)}</td></tr>`).join('')}</tbody></table></div></div>`}
+ return`<div class="pvb"><h5>🔎 Visites / inspections périodiques</h5><div class="tw"><table class="ectb"><thead><tr><th>Asset</th><th>Prochaine inspection périodique</th><th>Prochaine requalification</th></tr></thead><tbody>${L.map(o=>`<tr><td><b>${esc(o.as.name||'')}</b><br><span class="sub">${esc(eqLab(o.as)||o.as.type||'')}</span>${pvRaw(o.as)}</td><td>${pvCell(a,o.v.I)}</td><td>${pvCell(a,o.v.Q)}</td></tr>`).join('')}</tbody></table></div></div>`}
 /* alertes de la loc (pastilles, RentNews) */
 function pvAl(a){const out=[];pvLoc(a).forEach(o=>['I','Q'].forEach(k=>{const e=o.v[k];if(e&&(e.st==='r'||e.st==='a'))out.push({k,st:e.st,nx:e.nx,name:o.as.name,during:pvDuring(a,e.nx),open:e.open})}));return out}
 {if(typeof plFiche==='function'){const p0=plFiche;plFiche=function(){const r=p0.apply(this,arguments);try{const s=$('#plp');if(s&&cur){const o=s.querySelector('.pvb');const h=pvH(cur);if(o)o.outerHTML=h;else s.insertAdjacentHTML('beforeend',h)}}catch(e){console.error(e)}return r}}}
 {const f0=flags;flags=function(a){const f=f0(a);try{if(a.statut!=='Location clôturée'){const A=pvAl(a);['I','Q'].forEach(k=>{const L=A.filter(x=>x.k===k);if(!L.length)return;const r=L.find(x=>x.st==='r'),w=r||L.sort((x,y)=>x.nx.localeCompare(y.nx))[0];
-  const op=w.open;f.push([r?'r':'a',`${PVL[k]} ${r?'dépassée':'le '+EC.f(w.nx)} · ${L.map(x=>x.name).join(', ')}${op?` · ${op.st.l.toLowerCase()}${op.date?' le '+EC.f(op.date):''}`:''}`,'pv'])})}}catch(e){}return f}}
+  const op=w.open;f.push([r?'r':'a',`${PVL[k]} ${r?'dépassée':'le '+EC.f(w.nx)} · ${L.map(x=>x.name).join(', ')}${op?` · dernière visite : ${op.st.l.toLowerCase()}${op.date?' le '+EC.f(op.date):''}${op.com?` (${op.com.length>60?op.com.slice(0,60)+'…':op.com})`:''}`:''}`,'pv'])})}}catch(e){}return f}}
 {if(typeof gzUne==='function'){const g0=gzUne;gzUne=function(L){const C=g0.apply(this,arguments);try{const it=[];L.forEach(a=>{if(a.statut!=='Location en cours')return;const A=pvAl(a);if(A.length)it.push([a,A])});
-  if(it.length){const red=it.some(([,A])=>A.some(x=>x.st==='r'));C.push({s:red?86:72,t:`Visites / inspections périodiques : ${gzN(it.length,'location')} en alerte`,c:`D’après RentPlanner : ${it.slice(0,6).map(([a,A])=>`${gzLk(a)} (${A.map(x=>`${PVL[x.k].toLowerCase()} ${esc(x.name)} ${x.st==='r'?'dépassée':'le '+EC.f(x.nx)}${x.during?', pendant la location':''}${x.open?`, ${x.open.st.l.toLowerCase()}${x.open.date?' le '+EC.f(x.open.date):''}`:', aucune visite planifiée'}`).join(' ; ')})`).join(', ')}${it.length>6?` et ${it.length-6} autres`:''}.`});C.sort((x,y)=>y.s-x.s)}}catch(e){}return C}}}
+  if(it.length){const red=it.some(([,A])=>A.some(x=>x.st==='r'));C.push({s:red?86:72,t:`Visites / inspections périodiques : ${gzN(it.length,'location')} en alerte`,c:`D’après RentPlanner : ${it.slice(0,6).map(([a,A])=>`${gzLk(a)} (${A.map(x=>`${PVL[x.k].toLowerCase()} ${esc(x.name)} ${x.st==='r'?'dépassée':'le '+EC.f(x.nx)}${x.during?', pendant la location':''}${x.open?`, dernière visite ${x.open.st.l.toLowerCase()}${x.open.date?' le '+EC.f(x.open.date):''}${x.open.com?` (« ${esc(x.open.com.length>80?x.open.com.slice(0,80)+'…':x.open.com)} »)`:''}`:', aucune visite planifiée'}`).join(' ; ')})`).join(', ')}${it.length>6?` et ${it.length-6} autres`:''}.`});C.sort((x,y)=>y.s-x.s)}}catch(e){}return C}}}
 
 /* ===== Tableau de bord (KPI) =====
    Période : mois, trimestre ou année. Chaque indicateur est cliquable et ouvre la liste des locations concernées.
