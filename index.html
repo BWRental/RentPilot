@@ -257,7 +257,9 @@ h5.plsep{margin:12px 0 2px;font-size:13px;color:var(--mu)}
 .pvb{margin-top:14px;padding-top:10px;border-top:1px dashed var(--ln)}.pvb h5{margin:0 0 6px}
 .pvv{margin-top:4px;font-size:12.5px}.pvv summary{cursor:pointer;color:var(--mu)}.pvv>div{margin:3px 0}
 .ecask td{background:var(--hov,rgba(127,127,127,.1));padding:10px 12px}.ecask span{margin-right:10px}.ecask .btn{margin:4px 6px 4px 0}
-.ecdt{border:0;background:none;color:var(--mu);cursor:pointer;padding:0 4px;font-size:13px}.ecdt:hover{color:var(--pri)}.ecdti{font:inherit;font-size:12.5px;padding:2px 4px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink)}
+.ecdtb{border:0;background:none;color:var(--mu);cursor:pointer;padding:0 4px;margin:0 0 0 2px;font-size:13px;line-height:1.2}.ecdtb:hover{color:var(--pri)}.ecdti{font:inherit;font-size:12.5px;padding:2px 4px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink)}
+.gplg{display:inline-flex;align-items:center;gap:6px;margin-left:12px;font-weight:400;font-size:12.5px;color:var(--mu)}.gplg .btn{margin:0}
+.mgsug{border:1px dashed var(--ln);border-radius:8px;padding:8px 10px;margin:8px 0 10px;font-size:13px;display:grid;gap:6px}.mgsug .btn{margin-left:4px}
 /* tableau de bord */
 .kpbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
 .kpseg{display:flex}.kpseg .btn{border-radius:0}.kpseg .btn:first-child{border-radius:8px 0 0 8px}.kpseg .btn:last-child{border-radius:0 8px 8px 0}
@@ -903,8 +905,8 @@ function mgRender(){const el=$('#mgb');if(el&&cur){el.innerHTML=mgH(cur);mgCalc(
 $('#da').addEventListener('input',e=>{const k=e.target.dataset.mg;if(!k||!cur)return;const m=mgi(cur),v=e.target.value;m[k]=v===''?'':parseFloat(v);save();mgCalc()});
 $('#da').addEventListener('click',e=>{const b=e.target.closest('[data-mg-act]');if(!b||!cur||b.dataset.mgAct!=='next')return;const m=mgi(cur),pv=parseFloat(m.pvM),mi=parseFloat(m.miM);
  if(isNaN(pv)||isNaN(mi))return toast('Renseigne d’abord le PV et la MI cumulés du mois M.');
- m.hist.push({d:ymd(0),pv,mi});m.pvM1=pv;m.miM1=mi;m.pvM='';m.miM='';cur.com.push({d:new Date().toISOString(),t:`📊 Avenant : cumul enregistré (PV ${e2(pv)}, MI ${e2(mi)}, ${p1(pv?mi/pv*100:0)})`});
- save();mgRender();$('#cml').innerHTML=cmH(cur);toast('Mois enregistré : M est devenu M-1.')});
+ m.hist.push({d:ymd(0),pv,mi});m.pvM1=pv;m.miM1=mi;m.pvM='';m.miM='';try{mgAuto(cur,m)}catch(x){}cur.com.push({d:new Date().toISOString(),t:`📊 Avenant : cumul enregistré (PV ${e2(pv)}, MI ${e2(mi)}, ${p1(pv?mi/pv*100:0)})`});
+ save();mgRender();$('#cml').innerHTML=cmH(cur);toast(m.pvM!==''?`Mois enregistré : M est devenu M-1. PV M proposé : ${e2(+m.pvM)}${m.miM!==''?', MI M estimée : '+e2(+m.miM):''}.`:'Mois enregistré : M est devenu M-1.')});
 
 /* ===== Mode connecté (Supabase) : connexion, rôles, synchronisation, historique ===== */
 window.CLOUD=false;
@@ -1997,7 +1999,21 @@ const GP0={desL:'LOCATION {du} - {au}',obsL:'Location du {du} au {au}',
  opt:[['astr','Astreinte téléphonique','Astreinte sur la période citée ci-dessus'],
   ['tech','Présence technicien pour l’exploitation','Présence technicien pour l’exploitation sur la période citée ci-dessus'],
   ['eau','Traitement d’eau','Fourniture des produits de traitement d’eau et suivi de la qualité des eaux sur la période citée ci-dessus']]};
-function GP(){const g=CFG.gpic||{},o={...GP0};['desL','obsL','fin','ctr','desA','desR'].forEach(k=>{if(typeof g[k]==='string'&&g[k].trim())o[k]=g[k]});
+/* version anglaise des termes GPIC (locations à l'étranger) */
+const GP0EN={desL:'RENTAL {du} - {au}',obsL:'Rental from {du} to {au}',
+ fin:'In accordance with the General Rental Conditions of our offer no. {devis} and your order no. {cde}{contrat}.',ctr:' and contract no. {contrat}',
+ desA:'MOBILISATION',desR:'DEMOBILISATION',
+ pres:{transpA:['OUTWARD TRANSPORT','Outward transport (loading at our factory + transport)'],grutA:['CRANE','Crane (unloading and positioning)'],
+  instal:['INSTALLATION','Unloading, positioning (levelling), reassembly of the sub-assemblies dismantled for transport (chimney, safety valve, valves, etc.) and hydraulic connection'],
+  elec:['ELEC CONNECTION','Electrical connection (supply of circuit breaker in the customer’s cabinet and cables, installation and connection)'],superv:['SUPERVISION','Supervision of the installation'],
+  mes:['COMMISSIONING','Commissioning and handover visit'],cms:['NOTIFIED BODY INSPECTION','Commissioning inspection by a notified body in accordance with Directive 2014/68/EU'],
+  decoE:['ELEC DISCONNECTION','Electrical disconnection'],repli:['DISMANTLING','Dismantling of the sub-assemblies for transport (returned in the same condition as at delivery), hydraulic disconnection and reloading'],
+  grutR:['CRANE','Crane (reloading)'],transpR:['RETURN TRANSPORT','Return transport (transport + unloading at our factory)']},
+ opt:{astr:'Telephone on-call service over the above period',tech:'Technician on site for operation over the above period',eau:'Supply of water treatment chemicals and monitoring of water quality over the above period'}};
+const GPL=a=>a&&a.gpLang==='en'?'en':'fr';
+function GP(lang){if(lang==='en'){const g=(CFG.gpic||{}).en||{},o={...GP0,...GP0EN};['desL','obsL','fin','ctr','desA','desR'].forEach(k=>{if(typeof g[k]==='string'&&g[k].trim())o[k]=g[k]});
+  o.pres=GP0.pres.map(([k,s_,c,t,f])=>{const x=(g.pres||{})[k]||{},d=GP0EN.pres[k]||[c,t];return[k,s_,x.c||d[0],x.t||d[1],f]});o.opt=GP0.opt.map(([k,l,t])=>[k,l,((g.opt||{})[k])||GP0EN.opt[k]||t]);return o}
+ const g=CFG.gpic||{},o={...GP0};['desL','obsL','fin','ctr','desA','desR'].forEach(k=>{if(typeof g[k]==='string'&&g[k].trim())o[k]=g[k]});
  o.pres=GP0.pres.map(([k,s,c,t,f])=>{const x=(g.pres||{})[k]||{};return[k,s,x.c||c,x.t||t,f]});o.opt=GP0.opt.map(([k,l,t])=>[k,l,((g.opt||{})[k])||t]);return o}
 const tplF=(s,v)=>String(s).replace(/\{(\w+)\}/g,(m,k)=>v[k]??'');
 /* désignation de l'équipement, d'après RentPlanner (sans n° d'équipement) */
@@ -2006,8 +2022,10 @@ const EQFR={'Steam boiler':[1,'Chaudière vapeur','pf'],'Hot water boiler':[1,'C
  'Gas pressure reducer':[4,'Poste de détente gaz',''],'LFO booster pump':[4,'Pompe de gavage FOD',''],'Blowdown vessel':[5,'Pot de purges',''],'Water expansion tank':[5,'Vase d’expansion',''],'Hot water pump':[5,'Pompe eau chaude',''],'Silencer':[6,'Silencieux','']};
 function eqLab(as){const nf=v=>String(v).replace('.',','),m=String(as.model||'').trim(),d=EQFR[as.type];if(!d)return m||'';let s=d[1]+(m?' '+m:'');
  if(d[2].includes('p')&&as.pressure)s+=` - ${nf(as.pressure)} bar`;if(d[2].includes('f')&&as.flow&&!/t\/h/i.test(m))s+=` - ${nf(as.flow)} t/h`;if(d[2]==='kw'&&as.power&&!/kw/i.test(m))s+=` - ${as.power} kW`;return s}
-function eqAuto(a){try{if(typeof plProj==='function'){const p=plProj(a);if(p){const R=plRows(p).filter(x=>!PLX.has(x.as.type)&&!(x.workshop_return||x.transfer_to_next)&&EQFR[x.as.type]).sort((x,y)=>EQFR[x.as.type][0]-EQFR[y.as.type][0]),c=new Map();
-  R.forEach(x=>{const l=eqLab(x.as);if(l)c.set(l,(c.get(l)||0)+1)});if(c.size)return[...c].map(([l,n])=>(n>1?n+' x ':'')+l).join('\n')}}}catch(e){}
+function eqLabEn(as){const m=String(as.model||'').trim(),d=EQFR[as.type];if(!d)return m||'';let s=as.type+(m?' '+m:'');
+ if(d[2].includes('p')&&as.pressure)s+=` - ${as.pressure} bar`;if(d[2].includes('f')&&as.flow&&!/t\/h/i.test(m))s+=` - ${as.flow} t/h`;if(d[2]==='kw'&&as.power&&!/kw/i.test(m))s+=` - ${as.power} kW`;return s}
+function eqAuto(a,lang){try{if(typeof plProj==='function'){const p=plProj(a);if(p){const R=plRows(p).filter(x=>!PLX.has(x.as.type)&&!(x.workshop_return||x.transfer_to_next)&&EQFR[x.as.type]).sort((x,y)=>EQFR[x.as.type][0]-EQFR[y.as.type][0]),c=new Map();
+  R.forEach(x=>{const l=lang==='en'?eqLabEn(x.as):eqLab(x.as);if(l)c.set(l,(c.get(l)||0)+1)});if(c.size)return[...c].map(([l,n])=>(n>1?n+' x ':'')+l).join('\n')}}}catch(e){}
  return a.modele?String(a.modele).trim():''}
 /* --- calcul des lignes --- */
 /* commande = en-tête commun (n° commande, devis, révision, contrat, total) + lots :
@@ -2082,12 +2100,12 @@ function ecSync(a){const v=ecVals(a);if(!v)return;Object.assign(a,v);delete a.fi
  const row=`<div class="cr ${ok?'done':''}"><span class="ck">${ok?'✓':'○'}</span><div class="ct"><b>1. Tous les termes sont facturés (lu dans l’échéancier)</b><div class="cd" style="display:block">${ok?'Tous les termes sont facturés, connexes retour compris.':`<ul class="eccl2">${nf.slice(0,8).map(x=>`<li>⚠ TERL${x.terl} · ${esc(ecDes(x))} · ${EC.e(x.v)} : ${x.en?'enregistré, non facturé':'ni enregistré ni facturé'}</li>`).join('')}${nf.length>8?`<li>… et ${nf.length-8} autre${nf.length-8>1?'s':''}</li>`:''}</ul>`}<button class="btn sm" data-ecgo="1" style="margin-top:6px">📑 Ouvrir l’échéancier</button></div></div></div>`;
  return h.replace(/<div class="cr[^"]*">(?:(?!<div class="cr)[\s\S])*?1\. Retour facturé dans l’ERP[\s\S]*?(?=<div class="cr)/,row)}catch(e){return h}}}
 /* --- textes GPIC d'une ligne --- */
-function gpPres(l,side){const g=GP(),sel=l[side==='A'?'pA':'pR']||[];return g.pres.filter(p=>p[1]===side&&sel.includes(p[0])).map(p=>({c:p[2],t:p[3]}))}
-function gpTxt(a,x){const g=GP(),c=x.c,dv=[c.devis,c.rev].filter(Boolean).join(' ').trim(),fin=tplF(g.fin,{devis:dv||'…',cde:c.num||'…',contrat:c.ctr?tplF(g.ctr,{contrat:c.ctr}):''});
- if(x.t==='L'){const l=x.l,v={du:EC.f(x.s),au:EC.f(x.e)},eq=(l.equip||'').trim()||eqAuto(a),op=g.opt.filter(o=>(l.opt||[]).includes(o[0])).map(o=>o[2]);
+function gpPres(l,side,lang){const g=GP(lang),sel=l[side==='A'?'pA':'pR']||[];return g.pres.filter(p=>p[1]===side&&sel.includes(p[0])).map(p=>({c:p[2],t:p[3]}))}
+function gpTxt(a,x,lang){lang=lang||GPL(a);const g=GP(lang),c=x.c,dv=[c.devis,c.rev].filter(Boolean).join(' ').trim(),fin=tplF(g.fin,{devis:dv||'…',cde:c.num||'…',contrat:c.ctr?tplF(g.ctr,{contrat:c.ctr}):''});
+ if(x.t==='L'){const l=x.l,v={du:EC.f(x.s),au:EC.f(x.e)},eq=(lang==='en'?(l.equipEn||'').trim():(l.equip||'').trim())||eqAuto(a,lang),op=g.opt.filter(o=>(l.opt||[]).includes(o[0])).map(o=>o[2]);
   return{des:tplF(g.desL,v),obs:[tplF(g.obsL,v),eq,...op,(l.libre||'').trim(),'',fin].filter((t,i,A)=>t!==''||(i===A.length-2)).join('\n')}}
- if(x.t==='X'){const d=(x.au.d||'').trim();return{des:(d.split('\n')[0]||'PRESTATION').toUpperCase(),obs:[d,'',fin].join('\n')}}
- const P=gpPres(x.l,x.t);
+ if(x.t==='X'){const d=(x.au.d||'').trim();return{des:(d.split('\n')[0]||(lang==='en'?'SERVICE':'PRESTATION')).toUpperCase(),obs:[d,'',fin].join('\n')}}
+ const P=gpPres(x.l,x.t,lang);
  return{des:P.length?P.map(p=>p.c).filter((v,i,A)=>A.indexOf(v)===i).join(' / '):(x.t==='A'?g.desA:g.desR),obs:[...P.map(p=>p.t),'',fin].join('\n')}}
 const gpMt=v=>String(ecR(v)).replace('.',',');
 /* --- rendu --- */
@@ -2114,7 +2132,7 @@ function ecLotL(a,l,dis){const v=k=>esc(l[k]??''),g=GP();
  <label>Périodicité<select data-lk="u" ${dis}><option value="">—</option>${Object.entries(UNL).map(([k,x])=>`<option value="${k}" ${l.u===k?'selected':''}>${x[0].charAt(0).toUpperCase()+x[0].slice(1)}</option>`).join('')}</select></label><label>Durée d’un terme (nombre)<input type="number" min="1" step="1" data-lk="dur" value="${v('dur')}" placeholder="ex. 4" ${dis}></label><label>Nombre de termes commandés<input type="number" min="1" step="1" data-lk="nb" value="${v('nb')}" placeholder="vide = sans fin" ${dis}></label></div>
  <p class="sub ecfin" data-fin="${l.id}" style="margin:4px 0 0"></p>
  <div class="ecopt"><b>Options sur les loyers</b>${g.opt.map(o=>`<label class="eck"><input type="checkbox" data-lopt="${o[0]}" ${(l.opt||[]).includes(o[0])?'checked':''} ${dis}> ${esc(o[1])}</label>`).join('')}</div>
- <div class="fm" style="margin-top:6px"><label class="w">Équipement sur la facture (laisser vide = automatique, d’après RentPlanner)<textarea data-lk="equip" rows="2" placeholder="${esc(eqAuto(a)||'Ex. Chaudière vapeur BWR 40 - 30 bar - 4 t/h')}" ${dis}>${v('equip')}</textarea></label>
+ <div class="fm" style="margin-top:6px"><label class="w">Équipement sur la facture (laisser vide = automatique, d’après RentPlanner)<textarea data-lk="equip" rows="2" placeholder="${esc(eqAuto(a)||'Ex. Chaudière vapeur BWR 40 - 30 bar - 4 t/h')}" ${dis}>${v('equip')}</textarea></label>${GPL(a)==='en'?`<label class="w">Equipment on the invoice, in English (empty = automatic, from RentPlanner)<textarea data-lk="equipEn" rows="2" placeholder="${esc(eqAuto(a,'en')||'Ex. Steam boiler BWR 40 - 30 bar - 4 t/h')}" ${dis}>${v('equipEn')}</textarea></label>`:''}
  <label class="w">Phrase ajoutée aux loyers (facultatif)<input data-lk="libre" value="${v('libre')}" placeholder="Ex. Remise de compensation du coût de transport : -X €" ${dis}></label></div></div>`}
 function ecLotP(a,l,dis){const g=GP(),mt=l.mt||{},lv=ecD(a.livDate),rt=ecD(a.retour),on=(l.aut||[]).length>0;
  const it=(sd,p)=>`<div class="eck2" title="${esc(p[3])}"><label class="eck"><input type="checkbox" data-lck="${sd}" value="${p[0]}" ${(l[sd==='A'?'pA':'pR']||[]).includes(p[0])?'checked':''} ${dis}> <span>${esc(p[2])}<br><small class="sub">${esc(p[3].length>70?p[3].slice(0,67)+'…':p[3])}</small></span></label><input type="number" step="0.01" data-lam="${p[0]}" data-side="${sd}" value="${mt[p[0]]??''}" placeholder="€" ${dis} aria-label="Montant ${esc(p[2])}"></div>`;
@@ -2157,7 +2175,7 @@ function ecBodyH(a,pv){const ro=!CAN()||!!pv,X=echL(a),cm=EC.td().slice(0,7);let
  ${hid.length?`<button class="btn sm" data-ecall="1" style="margin:4px 0">Afficher les ${hid.length} lignes plus anciennes (facturées)</button>`:ECALL&&fac.length>4?`<button class="btn sm" data-ecall="0" style="margin:4px 0">Masquer les lignes anciennes</button>`:''}`;
  const row=x=>{const per=x.t==='L'?`${EC.f(x.s)} → ${EC.f(x.e)}<br><span class="sub">${x.ff?'forfait · ':''}${x.days} j${x.pr?` sur ${x.full} (prorata)`:''}</span>${x.hors?'<br><span class="pill r ec2">hors commande</span>':''}`:x.t==='A'?`${x.s?'Réalisé le '+EC.f(x.s):'Date ?'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`:x.t==='X'?`${x.s?'Le '+EC.f(x.s):'Date ?'}<br><span class="sub">${esc(((x.au.d||'').split('\n')[0]||'—').slice(0,60))}</span>`:`${x.s?'Retour le '+EC.f(x.s):'Retour non planifié'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`;
   const pvm=x.t==='L'?`${EC.mois(x.mp)}${x.dbl>1?`<br><span class="pill a ec2">${x.dbl} tranches ce mois-ci</span>`:''}`:`<input type="month" data-lm="${x.k}" value="${x.mp}" ${ro?'disabled':''} aria-label="Mois prévu d’enregistrement">`;
-  const mo=x.en?`<b>${EC.mois(x.me)}</b>${ro?'':` <button class="ecdt" data-led="${x.k}" title="Corriger la date d’enregistrement" aria-label="Corriger la date d’enregistrement">✎</button>`}<br><span class="sub">${x.st.eAt?'coché le '+frL(x.st.eAt.slice(0,10)):'d’après « Enregistré jusqu’au »'}</span>${x.me!==x.mp?`<br><span class="sub">prévu ${ecMs(x.mp)}</span>`:''}`:`<span class="sub">prévu</span> ${pvm}${x.late?`<br><span class="pill r ec2">en retard : à enregistrer en ${ecMs(cm)}</span>`:''}`;
+  const mo=x.en?`<b>${EC.mois(x.me)}</b>${ro?'':` <button class="ecdtb" data-led="${x.k}" title="Corriger la date d’enregistrement" aria-label="Corriger la date d’enregistrement">✎</button>`}<br><span class="sub">${x.st.eAt?'coché le '+frL(x.st.eAt.slice(0,10)):'d’après « Enregistré jusqu’au »'}</span>${x.me!==x.mp?`<br><span class="sub">prévu ${ecMs(x.mp)}</span>`:''}`:`<span class="sub">prévu</span> ${pvm}${x.late?`<br><span class="pill r ec2">en retard : à enregistrer en ${ecMs(cm)}</span>`:''}`;
   const cls=[x.m===cm?'ecm':'',x.late?'eclate':''].join(' ');
   return`<tr class="${cls}"><td><b>${esc(ecDes(x))}</b><br><span class="sub">TERL${x.terl}${X.cds.length>1?` · cde ${esc(x.c.num||'?')}`:''}</span></td><td>${mo}</td><td>${per}</td>
   <td class="ecv"><input type="number" step="0.01" data-lv="${x.k}" data-ls="${x.s}" value="${x.v}" ${ro?'disabled':''} class="${x.man!=null?'man':''}" aria-label="Montant">${x.man!=null?`<button class="btn sm" data-lr="${x.k}" title="Revenir au montant de la commande : ${EC.e(x.base)}" ${ro?'disabled':''}>↺</button>`:''}${x.pr?`<br><span class="sub">${EC.e(ecR(x.rate))}/j</span>`:''}</td>
@@ -2166,7 +2184,7 @@ function ecBodyH(a,pv){const ro=!CAN()||!!pv,X=echL(a),cm=EC.td().slice(0,7);let
  return h+`<div class="tw"><table class="ectb"><thead><tr><th>Ligne</th><th>Enregistrement</th><th>Période</th><th>Montant</th><th>État</th><th>GPIC</th></tr></thead><tbody>${sh.map(row).join('')}</tbody></table></div>
  <p class="sub" style="margin-top:6px">Enregistrement : le mois où l’on coche « Enregistré » (c’est ce mois-là que la campagne de fin de mois reprend la ligne) ; avant la coche, le mois prévu. ✎ corrige la date d’enregistrement ; une coche retirée par erreur garde sa date d’origine, proposée à la recoche. Montant corrigé à la main : figé tant que la période ne change pas ; ↺ revient au montant de la commande. Clés TERL proposées dans l’ordre chronologique (connexes aller, 1er loyer, connexes retour, puis loyers et autres prestations à leur date). <span title="Version de RentPilot">· version du ${RP_VER}</span></p>`}
 function gpRow(a,x){const t=gpTxt(a,x),cp=(id,lab)=>`<button class="btn sm" data-cp="${id}">📋 Copier ${lab}</button>`;
- return`<tr class="gprow"><td colspan="6"><div class="gpb"><div class="gph"><b>TERL${x.terl}</b> · à saisir dans GPIC : désignation, observation, montant (la date prévue se saisit dans GPIC)</div>
+ const lg=GPL(a);return`<tr class="gprow"><td colspan="6"><div class="gpb"><div class="gph"><b>TERL${x.terl}</b> · à saisir dans GPIC : désignation, observation, montant (la date prévue se saisit dans GPIC)<span class="gplg" role="group" aria-label="Langue des termes GPIC">Langue des termes : <button class="btn sm ${lg==='fr'?'p':''}" data-gpl="fr">Français</button><button class="btn sm ${lg==='en'?'p':''}" data-gpl="en">English</button></span></div>${lg==='en'?'<p class="sub" style="margin:0 0 6px">Termes en anglais pour cette location (location à l’étranger). Les « autres prestations » reprennent la désignation telle que saisie.</p>':''}
  <label>Désignation ${cp('gpd','la désignation')}<input id="gpd" readonly value="${esc(t.des)}"></label>
  <label>Observation ${cp('gpo','l’observation')}<textarea id="gpo" readonly rows="${Math.min(12,t.obs.split('\n').length+1)}">${esc(t.obs)}</textarea></label>
  <label>Montant ${cp('gpm','le montant')}<input id="gpm" readonly value="${gpMt(x.v)}" style="max-width:160px"></label></div></td></tr>`}
@@ -2205,7 +2223,7 @@ function ecAsk(t,k,kind,s){document.querySelectorAll('.ecask').forEach(e=>e.remo
  tr.insertAdjacentHTML('afterend',`<tr class="ecask"><td colspan="${tr.children.length}"><span>↺ Ce terme avait déjà été enregistré ${im?`en <b>${mo}</b> (coche antérieure au suivi daté)`:`le <b>${frL(d)}</b>${s.eBy0?' par '+esc(s.eBy0):''} (${mo})`}, puis décoché.</span><button class="btn sm p" data-eca="${esc(k)}" data-ecak="${kind}" data-ecv="1">${im?'Remettre en '+mo:'Remettre au '+frL(d)}</button><button class="btn sm" data-eca="${esc(k)}" data-ecak="${kind}" data-ecv="0">Enregistrer aujourd’hui (${ecMs(ecNowMo())})</button><button class="btn sm" data-eca="" data-ecv="x">Annuler</button></td></tr>`)}
 $('#da').addEventListener('click',e=>{const b=e.target.closest('[data-eca]');if(!b||!cur)return;const v=b.dataset.ecv;b.closest('.ecask').remove();if(v==='x')return;ecTick(b.dataset.eca,b.dataset.ecak,true,cur,{keep:v==='1'})});
 /* correction de la date d'enregistrement d'une ligne cochée */
-function ecSetDate(k,d){const a=cur;if(!a||!ecD(d))return;if(d>EC.s(EC.n(new Date().toISOString().slice(0,10))))return toast('La date d’enregistrement ne peut pas être dans le futur.');ecMat(a);const x=echL(a).L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],old=x.me;
+function ecSetDate(k,d){const a=cur;if(!a||!ecD(d))return;if(d>EC.s(EC.n(new Date().toISOString().slice(0,10)))){refreshD();return toast('La date d’enregistrement ne peut pas être dans le futur.')}ecMat(a);const x=echL(a).L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],old=x.me;
  s.e=true;s.eAt=new Date(d+'T12:00:00').toISOString();s.eBy=s.eBy||ecWho();delete s.eAt0;delete s.eBy0;delete s.eImp0;
  a.com=a.com||[];a.com.push({d:new Date().toISOString(),t:`📅 Date d’enregistrement corrigée : ${ecDes(x)} (TERL${x.terl}) enregistré le ${frL(d)}${old&&old!==d.slice(0,7)?` (au lieu de ${ecMs(old)})`:''}`});
  ecSync(a);save();render();refreshD();if($('#cml'))$('#cml').innerHTML=cmH(a);try{fmMark(a,k)}catch(e){}}
@@ -2219,7 +2237,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='23/11/2026 15h15';
+const RP_VER='23/11/2026 16h30';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -2254,6 +2272,7 @@ $('#da').addEventListener('click',e=>{const t=e.target.closest('button');if(!t||
  if(t.id==='ecgo'||D_.ecgo){const s=$('#echp');if(s)s.scrollIntoView({behavior:'smooth',block:'start'})}
  if(D_.cmall){CMALL=!CMALL;if($('#cml'))$('#cml').innerHTML=cmH(cur)}
  if(D_.gp){ECGP=ECGP===D_.gp?null:D_.gp;ecRender()}
+ if(D_.gpl&&cur&&CAN()){const v=D_.gpl==='en'?'en':'';if((cur.gpLang||'')!==v){if(v)cur.gpLang='en';else delete cur.gpLang;cur.com=cur.com||[];cur.com.push({d:new Date().toISOString(),t:`🌐 Termes GPIC en ${v?'anglais':'français'}`});save();ecRender();if($('#cml'))$('#cml').innerHTML=cmH(cur)}return}
  if(D_.cp){const n=document.getElementById(D_.cp);if(!n)return;const v=n.value;const ok=()=>{toast('Copié : colle-le dans GPIC (Ctrl+V).');t.textContent='✓ Copié';setTimeout(()=>{if(t.isConnected)t.textContent=t.textContent.replace('✓ Copié','📋 Copié')},1500)};
   (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(v):Promise.reject()).then(ok,()=>{n.select();try{document.execCommand('copy');ok()}catch(x){toast('Copie impossible : sélectionne le texte et fais Ctrl+C.')}})}
  if(!CAN())return;
@@ -2284,8 +2303,8 @@ $('#da').addEventListener('click',e=>{const t=e.target.closest('button');if(!t||
 /* pastilles de la carte : alertes d'échéancier */
 {const f0=flags;flags=function(a){const f=f0(a);try{if(cdesOf(a).length){const X=echL(a);const PL_={tot:'Commande dépassée',fin:'Loyer hors commande',hors:'Nouvelle commande à saisir',oub:'Ligne non enregistrée',ret:'Retour à facturer',ech:'Terme échu non facturé',term:'Loc terminée : termes non facturés'};[...new Set(X.al.map(x=>x[0]))].forEach(k=>f.push([k==='oub'||k==='hors'?'a':'r',PL_[k]||'Échéancier','ech']))}}catch(e){}return f}}
 /* --- Réglages : textes GPIC (admin) --- */
-{const o3=openCfg;openCfg=function(){const r=o3.apply(this,arguments);try{const ok=!window.CLOUD||ADM(),g=GP(),ro=ok?'':'disabled';
- $('#da').insertAdjacentHTML('beforeend',`<section class="pn" style="margin-top:16px" id="gpcfg"><h4>Textes des termes GPIC</h4>${ok?'':'<p class="sub">Seul un administrateur peut modifier ces textes.</p>'}
+let GPCL='fr';{const o3=openCfg;openCfg=function(){const r=o3.apply(this,arguments);try{const ok=!window.CLOUD||ADM(),lg=GPCL,g=GP(lg),ro=ok?'':'disabled';
+ $('#da').insertAdjacentHTML('beforeend',`<section class="pn" style="margin-top:16px" id="gpcfg"><h4>Textes des termes GPIC</h4><div class="gplg" style="margin:0 0 8px">Version : <button class="btn sm ${lg==='fr'?'p':''}" data-gpcl="fr">Français</button><button class="btn sm ${lg==='en'?'p':''}" data-gpcl="en">English (locations à l’étranger)</button></div>${ok?'':'<p class="sub">Seul un administrateur peut modifier ces textes.</p>'}
  <p class="sub">Repères : {du} {au} (dates du terme), {devis} (n° et révision), {cde} (n° de commande), {contrat}. Le texte « contrat » ne s’ajoute que si un n° de contrat est saisi.</p>
  <div class="fm"><label>Désignation d’un loyer<input data-gpk="desL" value="${esc(g.desL)}" ${ro}></label><label>1re ligne de l’observation d’un loyer<input data-gpk="obsL" value="${esc(g.obsL)}" ${ro}></label>
  <label class="w">Mention de fin (sur chaque terme)<textarea data-gpk="fin" rows="2" ${ro}>${esc(g.fin)}</textarea></label><label>Ajout si contrat<input data-gpk="ctr" value="${esc(g.ctr)}" ${ro}></label>
@@ -2296,10 +2315,11 @@ $('#da').addEventListener('click',e=>{const t=e.target.closest('button');if(!t||
  ${g.opt.map(o=>`<div class="gpp"><span>${esc(o[1])}</span><textarea data-gpo="${o[0]}" rows="1" ${ro}>${esc(o[2])}</textarea></div>`).join('')}
  ${ok?'<button class="btn" id="gp-reset" style="margin-top:8px">Revenir aux textes d’origine</button>':''}</section>`);
  const S=$('#gpcfg'),put=()=>{cfgSave();if(window.CLOUD)queueSync();toast('Textes GPIC enregistrés.')};
- S.addEventListener('change',e=>{if(!ok)return;const t=e.target,g2=CFG.gpic=CFG.gpic||{};if(t.dataset.gpk)g2[t.dataset.gpk]=t.value;
+ S.addEventListener('change',e=>{if(!ok)return;const t=e.target,g1=CFG.gpic=CFG.gpic||{},g2=lg==='en'?(g1.en=g1.en||{}):g1;if(t.dataset.gpk)g2[t.dataset.gpk]=t.value;
   if(t.dataset.gpc||t.dataset.gpt){const k=t.dataset.gpc||t.dataset.gpt;g2.pres=g2.pres||{};g2.pres[k]=g2.pres[k]||{};g2.pres[k][t.dataset.gpc?'c':'t']=t.value}
   if(t.dataset.gpo){g2.opt=g2.opt||{};g2.opt[t.dataset.gpo]=t.value}put()});
- S.addEventListener('click',e=>{if(e.target.id==='gp-reset'&&ok&&confirm('Revenir aux textes d’origine ?')){CFG.gpic={};put();openCfg()}})}catch(e){console.error(e)}return r}}
+ S.addEventListener('click',e=>{const c=e.target.closest('[data-gpcl]');if(c){GPCL=c.dataset.gpcl;openCfg();setTimeout(()=>{const x=$('#gpcfg');if(x)x.scrollIntoView({block:'start'})},30);return}
+  if(e.target.id==='gp-reset'&&ok&&confirm(`Revenir aux textes d’origine (${lg==='en'?'anglais':'français'}) ?`)){if(lg==='en')delete (CFG.gpic||{}).en;else CFG.gpic={...(CFG.gpic&&CFG.gpic.en?{en:CFG.gpic.en}:{})};put();openCfg()}})}catch(e){console.error(e)}return r}}
 /* ===== Historique des modifications (accueil) : toutes les locs, filtres loc / CA / auteur / rubrique / type / période ===== */
 const HX={rows:null,err:'',n:60,f:{q:'',ca:'',who:'',sec:'',act:'',per:'30'}};
 async function hxOpen(){cur=null;const d=$('#dr');d.classList.add('full');d.hidden=false;d.scrollTop=0;HX.n=60;hxRender();await hxLoad()}
@@ -2335,6 +2355,23 @@ function hxRender(){if($('#dr').hidden)return;const F=HX.f,all=HX.rows||[],cl=wi
 $('#da').addEventListener('change',e=>{if(!hxOn())return;const t=e.target,m={'hx-ca':'ca','hx-who':'who','hx-sec':'sec','hx-act':'act','hx-per':'per'}[t.id];if(!m)return;HX.f[m]=t.value;HX.n=60;if(m==='per')hxLoad();else hxRender()});
 $('#da').addEventListener('input',e=>{if(!hxOn()||e.target.id!=='hx-q')return;HX.f.q=e.target.value;HX.n=60;clearTimeout(HX.t);HX.t=setTimeout(()=>{const p=e.target.selectionStart;hxRender();const i=$('#hx-q');if(i){i.focus();try{i.setSelectionRange(p,p)}catch(x){}}},250)});
 $('#da').addEventListener('click',e=>{if(!hxOn())return;const t=e.target;if(t.id==='hx-more'){HX.n+=100;hxRender()}if(t.id==='hx-rz'){HX.f={q:'',ca:'',who:'',sec:'',act:'',per:HX.f.per};hxRender()}});
+/* --- calculateur de marge : PV M proposé (M-1 + chiffre du mois lu dans l'échéancier) et MI M estimée (PV − coûts comptabilisés Vision SF) --- */
+function mgSug(a){const m=mgi(a),cm=EC.td().slice(0,7),n=k=>{const v=parseFloat(m[k]);return isNaN(v)?null:v},pv1=n('pvM1');let add=0,det='',src='';
+ try{if(cdesOf(a).length){const L=echL(a).L.filter(x=>x.m===cm);add=ecR(L.reduce((s,x)=>s+x.v,0));det=L.map(x=>`${ecDes(x)} ${EC.e(x.v)}`).join(' · ');src='ech'}}catch(e){}
+ if(!src&&+a.loyer){add=+a.loyer;det=`loyer de la fiche${a.per?' ('+a.per+')':''}`;src='loyer'}
+ const pv=pv1!=null&&src?ecR(pv1+add):null,G_=typeof sfGroups==='function'?sfGroups(a):null,cost=G_?G_.g.tot:null,cAt=G_&&G_.s.at||'',fresh=!!cAt&&cAt.slice(0,7)===cm;
+ const pvM=n('pvM')??pv,mi=pvM!=null&&cost!=null?ecR(pvM-cost):null;return{cm,add,det,src,pv,cost,cAt,fresh,mi,pvM}}
+/* à « Nouveau mois » : PV M = nouveau M-1 + chiffre du mois ; MI M estimée si les coûts ont été lus ce mois-ci */
+function mgAuto(a,m){const h=m.hist||[];if(h.length>1&&String(h[h.length-2].d).slice(0,7)===EC.td().slice(0,7))return;/* déjà fait ce mois-ci : pas de double ajout */const S=mgSug(a);if(S.pv!=null)m.pvM=S.pv;if(S.fresh&&S.cost!=null&&S.pv!=null)m.miM=ecR(S.pv-S.cost)}
+function mgSugH(a){const S=mgSug(a),m=mgi(a),b=(k,v)=>CAN()?` <button class="btn sm" data-mgs="${k}" data-v="${v}">Reprendre</button>`:'';
+ const l1=S.src?(S.pv!=null?`<div><b>PV M proposé : ${e2(S.pv)}</b> = PV M-1 ${e2(+m.pvM1)} + ${S.src==='ech'?'chiffre du mois dans l’échéancier':'loyer'} ${e2(S.add)}${S.det?`<br><span class="sub">${esc(S.det)}</span>`:''}${+m.pvM===S.pv?' <span class="pill ok ec2">repris</span>':b('pv',S.pv)}</div>`:'<div class="sub">PV M proposé : renseigne d’abord le PV cumulé de M-1.</div>'):'<div class="sub">PV M : pas d’échéancier ni de loyer sur la fiche pour le proposer.</div>';
+ const l2=S.cost==null?'<div class="sub">MI M : lis les coûts dans Vision SF (bloc « Coûts comptabilisés ») pour l’estimer, sinon reprends la MI de GPIC.</div>'
+  :S.mi==null?'<div class="sub">MI M estimée : renseigne d’abord le PV de M.</div>'
+  :`<div><b>MI M estimée : ${e2(S.mi)}</b> = PV M ${e2(S.pvM)} − coûts comptabilisés ${e2(S.cost)} <span class="sub">(Vision SF, lus le ${frL(S.cAt.slice(0,10))})</span>${S.fresh?'':' <span class="pill a ec2">coûts d’un autre mois : relis-les</span>'}${+m.miM===S.mi?' <span class="pill ok ec2">reprise</span>':b('mi',S.mi)}</div>`;
+ return`<div class="mgsug" id="mg-sug">${l1}${l2}<p class="sub" style="margin:4px 0 0">Estimation de la MI = PV cumulé − coûts comptabilisés (« dont comptabilisé » de la Vision SF). Compare-la une première fois avec la MI de GPIC : si GPIC ajoute d’autres éléments, c’est la valeur GPIC qui fait foi.</p></div>`}
+{const h0=mgH;mgH=function(a){const h=h0(a);try{const i=h.indexOf('<table class="mgt">');if(i>0)return h.slice(0,i)+'<div id="mg-sugw"></div>'+h.slice(i)}catch(e){}return h}}
+{const c0=mgCalc;mgCalc=function(){const r=c0.apply(this,arguments);try{const w=$('#mg-sugw');if(w&&cur)w.innerHTML=mgSugH(cur)}catch(e){console.error(e)}return r}}
+$('#da').addEventListener('click',e=>{const b=e.target.closest('[data-mgs]');if(!b||!cur||!CAN())return;const m=mgi(cur),v=parseFloat(b.dataset.v);if(isNaN(v))return;if(b.dataset.mgs==='pv')m.pvM=v;else m.miM=v;save();mgRender()});
 
 /* ===== Campagne de fin de mois : enregistrement du chiffre =====
    Ouverte le 1er du mois, date limite = dernier jour ouvré (week-ends et jours fériés français exclus).
