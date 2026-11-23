@@ -256,6 +256,7 @@ h5.plsep{margin:12px 0 2px;font-size:13px;color:var(--mu)}
 .sfbk{background:#0095D9!important;color:#fff!important;border-color:#0095D9!important;cursor:grab}
 .pvb{margin-top:14px;padding-top:10px;border-top:1px dashed var(--ln)}.pvb h5{margin:0 0 6px}
 .pvv{margin-top:4px;font-size:12.5px}.pvv summary{cursor:pointer;color:var(--mu)}.pvv>div{margin:3px 0}
+.ecask td{background:var(--hov,rgba(127,127,127,.1));padding:10px 12px}.ecask span{margin-right:10px}.ecask .btn{margin:4px 6px 4px 0}
 /* tableau de bord */
 .kpbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
 .kpseg{display:flex}.kpseg .btn{border-radius:0}.kpseg .btn:first-child{border-radius:8px 0 0 8px}.kpseg .btn:last-child{border-radius:0 8px 8px 0}
@@ -2197,16 +2198,24 @@ function ecPlace(){const S=[...document.querySelectorAll('#da section.pn')],h=r=
  const inf=h(/^Informations/),lr=h(/^Livraison et retour/);if(inf&&lr&&inf.nextElementSibling!==lr)lr.before(inf);
  const pl=$('#plp'),dp=$('#docp');if(pl&&dp&&dp.previousElementSibling!==pl)dp.before(pl)}
 /* récapitulatif de l'échéancier sur la carte de la liste */
+/* recocher un terme décoché : reprendre la date d'origine ou enregistrer aujourd'hui */
+function ecAsk(t,k,kind,s){document.querySelectorAll('.ecask').forEach(e=>e.remove());const tr=t.closest('tr');if(!tr)return;const d=s.eAt0.slice(0,10);
+ tr.insertAdjacentHTML('afterend',`<tr class="ecask"><td colspan="${tr.children.length}"><span>↺ Ce terme avait déjà été enregistré le <b>${frL(d)}</b>${s.eBy0?' par '+esc(s.eBy0):''} (${ecMs(ecMo(s.eAt0))}), puis décoché.</span><button class="btn sm p" data-eca="${esc(k)}" data-ecak="${kind}" data-ecv="1">Remettre au ${frL(d)}</button><button class="btn sm" data-eca="${esc(k)}" data-ecak="${kind}" data-ecv="0">Enregistrer aujourd’hui (${ecMs(ecNowMo())})</button><button class="btn sm" data-eca="" data-ecv="x">Annuler</button></td></tr>`)}
+$('#da').addEventListener('click',e=>{const b=e.target.closest('[data-eca]');if(!b||!cur)return;const v=b.dataset.ecv;b.closest('.ecask').remove();if(v==='x')return;ecTick(b.dataset.eca,b.dataset.ecak,true,cur,{keep:v==='1'})});
 function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L.length)return'';const s=f=>EC.e(L.filter(f).reduce((m,x)=>m+x.v,0)),pv=L.some(x=>x.prev);
  return`<div class="eccr"><span class="pill r">À enregistrer ${s(x=>!x.en&&!x.prev)}</span><span class="pill a">À facturer ${s(x=>x.en&&!x.f&&ecDue(x))}</span>${L.some(x=>x.en&&!x.f&&!ecDue(x))?`<span class="pill g">À facturer plus tard ${s(x=>x.en&&!x.f&&!ecDue(x))}</span>`:''}<span class="pill ok">Facturé ${s(x=>x.f)}</span><span class="pill b">dont connexes ${s(x=>x.t!=='L')}</span>${pv?`<span class="pill g">Prévu ${s(x=>x.prev)}</span>`:''}</div>`}catch(e){return''}}
 /* une coche → trace dans l'historique */
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
-function ecTick(k,kind,on,a0){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
- if(kind==='f'){s.f=on;if(on){s.fAt=now;s.fBy=who;if(!s.e){s.e=true;s.eAt=now;s.eBy=who}}else{delete s.fAt;delete s.fBy}
+/* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
+const ecNowMo=()=>ecMo(new Date().toISOString());
+function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
+ let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
+ const setE=()=>{s.e=true;if(k0){s.eAt=k0;s.eBy=s.eBy0||who}else{s.eAt=now;s.eBy=who}delete s.eAt0;delete s.eBy0};
+ if(kind==='f'){s.f=on;if(on){s.fAt=now;s.fBy=who;if(!s.e)setE()}else{delete s.fAt;delete s.fBy}
   if(x.t==='R'&&on&&!['Attente paiement factures','Payée'].includes(a.statutFac)){a.statutFac='Attente paiement factures';a.com=a.com||[];a.com.push({d:new Date(Date.now()+1).toISOString(),t:'💶 Facturation passée en « Attente paiement factures » (connexes retour facturés)'})}}
- else{s.e=on;if(on){s.eAt=now;s.eBy=who}else{delete s.eAt;delete s.eBy}}
- const lab=`${ecDes(x)} (TERL${x.terl}, ${EC.e(x.v)})`;
+ else if(on)setE();else{s.e=false;if(s.eAt){s.eAt0=s.eAt;s.eBy0=s.eBy}delete s.eAt;delete s.eBy}
+ const lab=`${ecDes(x)} (TERL${x.terl}, ${EC.e(x.v)})${k0?` — date d’enregistrement d’origine reprise : ${frL(k0.slice(0,10))}`:''}`;
  a.com=a.com||[];a.com.push({d:now,t:`${on?'✓':'✗'} ${kind==='f'?'Facturé':'Enregistré'}${on?'':' (coche retirée)'} : ${lab}`});
  ecSync(a);save();render();if(cur===a){refreshD();if($('#cml'))$('#cml').innerHTML=cmH(a)}try{fmMark(a,k)}catch(e){}}
 $('#da').addEventListener('input',e=>{const t=e.target;if(!t.closest||!t.closest('.ecform'))return;
@@ -2216,7 +2225,10 @@ $('#da').addEventListener('change',e=>{const t=e.target;if(!cur||!CAN())return;
  if(t.closest&&t.closest('.ecform')){if(t.dataset.lauton){const f=t.closest('.ecform');ECED.c=ecCollect(f);const l=ECED.c.lots.find(x=>x.id===t.closest('.eclot').dataset.lot);if(l)l.aut=t.checked?[{id:uid(),d:'',v:'',date:''}]:[];ecHead();return}ecPrevSoon();return}
  if(t.dataset.fd){const k=t.dataset.fd,X_=echL(cur),lc=X_.LL[X_.LL.length-1];cur[k]=t.checked?'':(k==='facDeb'?(ecD(cur.livDate)||EC.td()):((lc&&lc._fin)||ecD(cur.retour)||EC.me(EC.td())));ecSync(cur);save();render();refreshD();return}
  if(t.dataset.fv){if(ecD(t.value)){cur[t.dataset.fv]=t.value;ecSync(cur);save();render();refreshD()}return}
- if(t.dataset.le||t.dataset.lf){ecTick(t.dataset.le||t.dataset.lf,t.dataset.lf?'f':'e',t.checked);return}
+ if(t.dataset.le||t.dataset.lf){const k=t.dataset.le||t.dataset.lf,kind=t.dataset.lf?'f':'e',s=(cur.lig||{})[k]||{};
+  if(t.checked&&!s.e&&s.eAt0&&ecMo(s.eAt0)!==ecNowMo()){t.checked=false;ecAsk(t,k,kind,s);return}
+  if(!t.checked&&kind==='e'){const x=echL(cur).L.find(y=>y.k===k);if(x&&x.en&&x.me&&x.me<ecNowMo()&&!confirm(`Ce terme a été enregistré en ${ecMs(x.me)}${x.st.eAt?` (coché le ${frL(x.st.eAt.slice(0,10))})`:''}.\nRetirer la coche « Enregistré » ?\n\nSi tu la remets ensuite, RentPilot te proposera de reprendre cette date.`)){t.checked=true;return}}
+  ecTick(k,kind,t.checked);return}
  if(t.dataset.lv){const k=t.dataset.lv,x=echL(cur).L.find(y=>y.k===k);if(!x)return;cur.lig=cur.lig||{};const s=cur.lig[k]=cur.lig[k]||{},v=t.value===''?null:ecR(+t.value);
   if(v==null||v===x.base){delete s.v;delete s.s}else{s.v=v;s.s=x.s}ecSync(cur);save();render();refreshD();return}
  if(t.dataset.lm){cur.lig=cur.lig||{};const s=cur.lig[t.dataset.lm]=cur.lig[t.dataset.lm]||{};if(t.value)s.m=t.value;else delete s.m;save();render();refreshD()}});
@@ -2394,7 +2406,8 @@ function fmRender(){if($('#dr').hidden)return;const m=FMC.m,cl=FMC.camp&&FMC.cam
  if(fmCloud()){const by=new Map();R.filter(act).forEach(o=>{const k=o.a&&o.a.owner||'';if(!by.has(k))by.set(k,{e:0,t:0});const b=by.get(k);b.t+=o.v;if(enr(o))b.e+=o.v});
   if(by.size)h+=`<section class="pn"><h4>Avancement par chargé d’affaires</h4>${[...by].sort((x,y)=>(y[1].t-y[1].e)-(x[1].t-x[1].e)).map(([k,b])=>{const p=b.t?Math.round(b.e/b.t*100):100;return`<div class="fmca"><span>${esc(k?caName(k)||'?':'Non attribuées')}</span><div class="fmbar"><i style="width:${p}%"></i></div><b>${p} %</b><small class="sub">${EC.e(b.e)} / ${EC.e(b.t)}</small></div>`}).join('')}</section>`}
  const row=o=>{const r=o.r,a=o.a,x=o.x,ro=!CAN()||cl,[sl,sc]=o.st==='reporte'?['Enregistré en '+ecMs(x.me),'g']:FMST[o.st];
-  const btn=o.st==='a_enregistrer'&&x&&!o.blq?`<button class="btn sm p" data-fme="${r.id}" ${ro?'disabled':''}>✓ Enregistré</button>`:o.st==='enregistre'&&x&&ecDue(x)?`<button class="btn sm" data-fmf="${r.id}" ${ro?'disabled':''}>Facturé</button>`:o.st==='enregistre'&&x?`<span class="sub" title="À facturer une fois la fin de période dépassée">facturable le ${EC.f(EC.s(EC.n(x.due)+1))}</span>`:'';
+  const e0=o.st==='a_enregistrer'&&x&&x.st.eAt0?x.st.eAt0.slice(0,10):'';
+  const btn=o.st==='a_enregistrer'&&x&&!o.blq?`${e0?`<button class="btn sm" data-fmo="${r.id}" ${ro?'disabled':''} title="Ce terme avait été enregistré le ${frL(e0)} puis décoché">↺ Remettre au ${frL(e0)}</button> `:''}<button class="btn sm p" data-fme="${r.id}" ${ro?'disabled':''}>✓ Enregistré</button>`:o.st==='enregistre'&&x&&ecDue(x)?`<button class="btn sm" data-fmf="${r.id}" ${ro?'disabled':''}>Facturé</button>`:o.st==='enregistre'&&x?`<span class="sub" title="À facturer une fois la fin de période dépassée">facturable le ${EC.f(EC.s(EC.n(x.due)+1))}</span>`:'';
   const exb=o.st==='exclu'?`<button class="btn sm" data-fmr="${r.id}" ${ro?'disabled':''}>Rétablir</button>`:o.st==='a_enregistrer'?`<button class="btn sm" data-fmx="${r.id}" ${ro?'disabled':''}>Exclure</button>`:'';
   return`<tr class="${o.blq&&o.st==='a_enregistrer'?'fmblq':''}"><td>${a?`<a href="#" data-gzo="${esc(a.id)}"><b>${esc(a.loc||'Sans n°')}</b></a><br><span class="sub">${esc(a.client||'')}</span>`:'<b>Location supprimée</b>'}</td>
   <td>${fmCloud()&&a&&a.owner?esc(caName(a.owner)):'<span class="sub">—</span>'}</td><td>${esc(x?fmLab(x):r.libelle||'')}${o.blq&&o.st==='a_enregistrer'?`<br><span class="pill r ec2">⛔ ${esc(o.blq)}</span>`:''}${o.st==='exclu'&&r.motif?`<br><span class="sub">Motif : ${esc(r.motif)}</span>`:''}${x&&!x.en&&x.mp<FMC.m?`<br><span class="pill a ec2">en retard : prévu en ${ecMs(x.mp)}</span>`:''}${x&&x.en&&x.mp!==x.me&&o.st!=='reporte'?`<br><span class="sub">prévu ${ecMs(x.mp)}</span>`:''}${x?`<br><span class="sub">TERL${x.terl} · cde ${esc(x.c.num||'?')}</span>`:''}</td>
@@ -2440,7 +2453,7 @@ $('#da').addEventListener('click',async e=>{if(!fmOn())return;const t=e.target.c
  if(D_.fmall){FMC.all=D_.fmall==='1';fmRender();return}
  if(t.id==='fm-x'){fmXlsx();return}
  if(!CAN())return;
- if(D_.fme||D_.fmf){const o=byId(D_.fme||D_.fmf);if(!o||!o.x)return;ecTick(o.x.k,D_.fmf?'f':'e',true,o.a);fmRender();return}
+ if(D_.fme||D_.fmf||D_.fmo){const o=byId(D_.fme||D_.fmf||D_.fmo);if(!o||!o.x)return;ecTick(o.x.k,D_.fmf?'f':'e',true,o.a,{keep:!!D_.fmo});fmRender();return}
  if(D_.fmx){FMC.ex=+D_.fmx||D_.fmx;fmRender();return}
  if(D_.fmxno){FMC.ex=null;fmRender();return}
  if(D_.fmxok){const mo=($('#fm-mo')||{}).value||'';if(!mo.trim())return toast('Le motif est obligatoire pour exclure une ligne.');const o=byId(D_.fmxok);if(!o)return;
