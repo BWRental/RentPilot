@@ -233,6 +233,10 @@ h5.plsep{margin:12px 0 2px;font-size:13px;color:var(--mu)}
 .eccl2{margin:4px 0 0;padding-left:16px;font-size:13px}.eccl2 li{margin:2px 0;color:var(--er)}
 .eccr{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.eccr .pill{font-size:11px;padding:2px 7px}
 .ect .pill.p{border:1px solid var(--pri);color:var(--pri);background:color-mix(in srgb,var(--pri) 10%,transparent)}
+#ecb.gpdrop{outline:3px dashed var(--in,#6fa8ef);outline-offset:4px;background:color-mix(in srgb,var(--in,#6fa8ef) 8%,transparent)}
+.gphdz{display:inline-block;margin-left:6px}.gpt .ecdtb{margin-left:4px}
+.gphp .ectb td,.gphp .ectb th{font-size:12px;padding:4px 6px}.gphp .tw{max-height:360px;overflow:auto}
+.gphban{border-left-color:#c9a227}
 .fmban{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:8px 12px;border-radius:10px;margin:10px 0;font-size:13.5px;border:1px solid var(--ln);background:color-mix(in srgb,var(--mu) 8%,var(--bg))}
 .fmban.a{border-color:var(--wa);background:color-mix(in srgb,var(--wa) 14%,var(--bg))}
 .fmban.r{border-color:var(--er);background:color-mix(in srgb,var(--er) 12%,var(--bg))}
@@ -261,6 +265,13 @@ h5.plsep{margin:12px 0 2px;font-size:13px;color:var(--mu)}
 .gplg{display:inline-flex;align-items:center;gap:6px;margin-left:12px;font-weight:400;font-size:12.5px;color:var(--mu)}.gplg .btn{margin:0}
 .mgsug{border:1px dashed var(--ln);border-radius:8px;padding:8px 10px;margin:8px 0 10px;font-size:13px;display:grid;gap:6px}.mgsug .btn{margin-left:4px}
 .pvraw{margin-top:4px;font-size:11.5px}.pvraw summary{cursor:pointer;color:var(--mu)}.pvraw pre{max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:var(--hov,rgba(127,127,127,.08));padding:6px;border-radius:6px;margin:4px 0 0}
+/* reprise d'une ancienne location */
+.rpw .rpst{margin:12px 0 4px;font-size:13.5px}
+.rptb td{vertical-align:top}.rptb tr.off td{opacity:.45}.rptb select{max-width:190px;font:inherit;font-size:12.5px;padding:3px 4px;border:1px solid var(--ln);border-radius:5px;background:var(--bg);color:var(--ink)}.rptb input[type=date]{font:inherit;font-size:12.5px;padding:2px 4px;border:1px solid var(--ln);border-radius:5px;background:var(--bg);color:var(--ink)}
+.rpban{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:1px dashed var(--ln);border-left:4px solid var(--in,#6fa8ef);border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:13px}
+.rpban label{display:flex;gap:6px;align-items:center}.rpban input{font:inherit;padding:3px 6px;border:1px solid var(--ln);border-radius:5px;background:var(--bg);color:var(--ink)}
+.rpw label.w{display:grid;gap:6px;font-size:13px;margin:4px 0 8px}.rpw textarea{width:100%;box-sizing:border-box;font:12px/1.35 ui-monospace,Consolas,monospace;padding:8px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.rpw .tw{margin-top:8px}
 /* tableau de bord */
 .kpbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
 .kpseg{display:flex}.kpseg .btn{border-radius:0}.kpseg .btn:first-child{border-radius:8px 0 0 8px}.kpseg .btn:last-child{border-radius:0 8px 8px 0}
@@ -2173,12 +2184,18 @@ function echL(a){const cds=cdesOf(a),lots=cds.flatMap(c=>c.lots.map(l=>Object.as
  L.forEach(x=>{const st=lg[x.k]||{};x.st=st;x.mp=(x.t!=='L'&&st.m)||x.mDef;x.m=x.mp;x.man=st.v!=null&&st.v!==''&&(x.t!=='L'||st.s===x.s)?+st.v:null;x.v=x.man??x.base});
  /* ordre chronologique : connexes aller, 1er loyer, connexes retour, puis loyers et prestations à leur date */
  {const rk={A:0,L:1,R:2,X:3};L.forEach((x,i)=>{x._i=i;x._d=(x.t==='R'?x._after:x.s)||x.mDef+'-01'});L.sort((x,y)=>x._d<y._d?-1:x._d>y._d?1:rk[x.t]-rk[y.t]||x._i-y._i)}
- L.forEach((x,i)=>x.terl=i+1);
+ if(typeof gphLink==='function'&&a.gph&&(a.gph.items||[]).length){gphLink(a,L,lg,td);const rk2={H:0,A:0,L:1,R:2,X:3};L.forEach((x,i)=>{x._i=i;if(x.t==='H')x._d=x.s||'0000'});L.sort((x,y)=>x._d<y._d?-1:x._d>y._d?1:rk2[x.t]-rk2[y.t]||x._i-y._i);
+  let mx=0;L.forEach(x=>{const n=x.gs&&x.gs.length?Math.min(...x.gs.map(g=>g.n||0)):0;if(n){x.terl=n;mx=Math.max(mx,...x.gs.map(g=>g.n||0))}});L.forEach(x=>{if(!x.terl)x.terl=++mx})}
+ else L.forEach((x,i)=>x.terl=i+1);
  /* statut : coche explicite, sinon lu dans « Enregistré / Facturé jusqu’au » (données d'avant les coches) */
- const E=EC.n(a.finEnreg),Fa=EC.n(a.finFac),L1=L.find(x=>x.t==='L'),imp=(x,k)=>{const D_=k==='e'?E:Fa;if(x.t==='X')return false;if(x.t==='L')return D_!=null&&D_>=EC.n(x.e);
+ const E=EC.n(a.finEnreg),Fa=EC.n(a.finFac),RE=a.rep&&ecD(a.rep.enr)?EC.n(a.rep.enr):null,RF=a.rep&&ecD(a.rep.fac)?EC.n(a.rep.fac):null,L1=L.find(x=>x.t==='L'),imp=(x,k)=>{const D_=k==='e'?E:Fa,RPd=k==='e'?RE:RF;
+  /* reprise d'une ancienne loc : tout ce qui finit (loyer) ou est réalisé (connexes, prestations) avant la date de reprise est déjà traité dans l'ERP */
+  if(RPd!=null){const d=x.t==='L'?EC.n(x.e)-1:x.s?EC.n(x.s):null;if(d!=null&&d<=RPd)return true}
+  if(x.t==='X')return false;if(x.t==='L')return D_!=null&&D_>=EC.n(x.e)-1;
   if(x.t==='R'&&k==='f')return!!a.cloRf&&!lots.length;return!!L1&&imp(L1,k)};
- L.forEach(x=>{x.f=x.st.f!=null?!!x.st.f:imp(x,'f');x.en=x.f||(x.st.e!=null?!!x.st.e:imp(x,'e'));x.imp=x.st.e==null&&x.st.f==null&&(x.en||x.f);
-  x.me=x.en?(ecMo(x.st.eAt||x.st.fAt)||x.mp):'';x.m=x.en?x.me:(x.mp<cm?cm:x.mp);x.late=!x.en&&x.mp<cm;x.prev=!x.en&&x.mp>cm;x.due=x.t==='L'?x.e:x.s});
+ L.forEach(x=>{const G=x.gs&&x.gs.length?x.gs:null,gE=G&&G.every(g=>g.de&&g.de<=td),gF=G&&G.every(g=>g.df),gM=G?(G.map(g=>g.de||g.df).filter(Boolean).sort().pop()||'').slice(0,7):'';
+  x.f=x.st.f!=null?!!x.st.f:G?gF:imp(x,'f');x.en=x.f||(x.st.e!=null?!!x.st.e:G?gE:imp(x,'e'));x.imp=x.st.e==null&&x.st.f==null&&(x.en||x.f)&&!G;
+  x.me=x.en?(ecMo(x.st.eAt||x.st.fAt)||(x.st.e==null&&gM)||x.mp):'';x.m=x.en?x.me:(x.mp<cm?cm:x.mp);x.late=!x.en&&x.mp<cm;x.prev=!x.en&&x.mp>cm;x.due=x.t==='L'?x.e:x.s});
  const cc={};L.filter(x=>x.t==='L').forEach(x=>cc[x.mp]=(cc[x.mp]||0)+1);L.forEach(x=>x.dbl=x.t==='L'?cc[x.mp]:0);
  /* alertes */
  const al=[],lab=x=>ecDes(x);
@@ -2187,7 +2204,7 @@ function echL(a){const cds=cdesOf(a),lots=cds.flatMap(c=>c.lots.map(l=>Object.as
   const od=o.filter(x=>!x.en&&x.mp<=cm);if(od.length)al.push(['hors',`Commande ${nm} terminée le ${EC.f(l._fin)} : ${od.length} terme${od.length>1?'s':''} sans commande, nouvelle commande à saisir`])});
  const ob=L.filter(x=>x.late);if(ob.length)al.push(['oub',`${ob.length} ligne${ob.length>1?'s':''} d’un mois passé non enregistrée${ob.length>1?'s':''} (${[...new Set(ob.map(x=>EC.mois(x.mp)))].join(', ')})`]);
  const rr=L.filter(x=>x.t==='R'&&!x.f&&x.s&&x.s<td);rr.forEach(x=>al.push(['ret',`Retour du ${EC.f(x.s)} passé : connexes retour à facturer (TERL${x.terl}, ${EC.e(x.v)})`]));
- const nf=L.filter(x=>!x.f&&x.t!=='R'&&x.due&&x.due<td);
+ const nf=L.filter(x=>!x.f&&x.t!=='R'&&x.t!=='H'&&x.due&&x.due<td);
  if(TERM(a)){const all=L.filter(x=>!x.f);if(all.length)al.push(['term',`Location terminée : ${all.length} terme${all.length>1?'s':''} non facturé${all.length>1?'s':''} — ${all.slice(0,4).map(x=>`TERL${x.terl} ${lab(x)}`).join(' ; ')}${all.length>4?' ; …':''}`])}
  else if(nf.length)al.push(['ech',`${nf.length} terme${nf.length>1?'s':''} échu${nf.length>1?'s':''} non facturé${nf.length>1?'s':''} — ${nf.slice(-3).map(x=>`TERL${x.terl} ${lab(x)}`).join(' ; ')}${nf.length>3?' ; …':''}`]);
  return{L,err,al,R,lim,cds,FB,LL,PL,RP}}
@@ -2224,7 +2241,7 @@ const ECMO=['janvier','février','mars','avril','mai','juin','juillet','août','
 const ecMs=m=>m?`${ECMO[+m.slice(5,7)-1]} ${m.slice(0,4)}`:'';
 /* désignation du terme : le terme se repère par sa période (loyer) ou sa date de réalisation (connexes, autres) */
 const ecPer=(s,e)=>s&&e?(s.slice(0,4)===e.slice(0,4)?`${s.slice(8,10)}/${s.slice(5,7)} → ${EC.f(e)}`:`${EC.f(s)} → ${EC.f(e)}`):EC.f(s||e);
-function ecDes(x){if(x.t==='L'){const l=x.l,n=`Loyer n°${x.n}${x.ff?' (forfait)':''}`,cal=l.u==='M'&&x.s.slice(8,10)==='01'&&!x.pr;
+function ecDes(x){if(x.t==='H')return x.gs[0].lib||'Terme GPIC';if(x.t==='L'){const l=x.l,n=`Loyer n°${x.n}${x.ff?' (forfait)':''}`,cal=l.u==='M'&&x.s.slice(8,10)==='01'&&!x.pr;
   if(cal){const k=+l.dur||1,m2=EC.am(x.s,k-1).slice(0,7);return`${n} · ${k===1?ecMs(x.s.slice(0,7)):x.s.slice(0,4)===m2.slice(0,4)?`${ECMO[+x.s.slice(5,7)-1]} → ${ecMs(m2)}`:`${ecMs(x.s.slice(0,7))} → ${ecMs(m2)}`}`}
   return`${n} · ${ecPer(x.s,x.e)}${x.pr?' (prorata)':''}`}
  if(x.t==='A')return`Connexes aller · ${x.s?'réalisés le '+EC.f(x.s):'date à confirmer'}`;
@@ -2271,19 +2288,19 @@ function ecH(a){const ro=!CAN(),X=echL(a);
  const cl=X.cds.map(c=>`<div class="eccd"><div><b>Cde ${esc(c.num||'sans n°')}</b>${c.devis?` · ${esc([c.devis,c.rev].filter(Boolean).join(' '))}`:''}${c.ctr?` · contrat ${esc(c.ctr)}`:''}${+c.total?` · total commandé ${EC.e(+c.total)}`:''}${c.lots.map(l=>`<br><span class="sub">${lotTxt(l)}</span>`).join('')}${cdeConn(c)&&c.lots.some(l=>l.t==='L')?`<br><span class="sub">Total connexes de la commande : <b>${EC.e(cdeConn(c))}</b></span>`:''}</div>${ro?'':`<button class="btn sm" data-ecedit="${c.id}">Modifier</button>`}</div>`).join('');
  const ed=ECED&&ECED.a===a?ecCdeH(a,ECED.c):'';
  let h=`<div class="eccl">${cl||'<p class="sub" style="margin:0">Aucune commande client saisie : ajoute-la pour générer l’échéancier et les termes GPIC.</p>'}</div>${ed||(ro?'':`<button class="btn" data-ecadd="1" style="margin:6px 0">+ Ajouter une commande client</button>`)}`;
- return`<div id="ecbh">${h}</div><div id="ecbb">${X.cds.length?ecBodyH(a):''}</div>`}
+ return`<div id="ecbh">${h}</div><div id="ecbb">${X.cds.length||(a.gph&&(a.gph.items||[]).length)?ecBodyH(a):''}</div>`}
 function ecBodyH(a,pv){const ro=!CAN()||!!pv,X=echL(a),cm=EC.td().slice(0,7);let h=ecDatesH(a,X);
  if(X.err.length)h+=`<p class="note ecw">⚠ À compléter : ${esc(X.err.join(', '))}.</p>`;
  if(X.al.length)h+=`<div class="ecal">${X.al.map(x=>`<p>⚠ ${esc(x[1])}</p>`).join('')}</div>`;
  const L=X.L,sum=f=>L.filter(f).reduce((m,x)=>m+x.v,0),fac=L.filter(x=>x.f),hid=!ECALL&&fac.length>4?fac.slice(0,fac.length-3):[],sh=L.filter(x=>!hid.includes(x));
  h+=`<p class="sub" style="margin:10px 0 4px">${X.R?`Facturation jusqu’au ${EC.f(X.R)}`:`Sans fin de facturation : loyers comptés jusqu’à la fin du mois (${EC.f(X.lim)})`} · cocher « Enregistré » ou « Facturé » met à jour les dates « jusqu’au » de la Facturation.</p>
- <div class="ect"><span>Total ${EC.e(sum(()=>1))}</span><span class="pill p" title="Somme de tous les termes enregistrés (facturés ou non) depuis le début de la location">Enregistré depuis le début ${EC.e(sum(x=>x.en))}</span><span class="pill r">À enregistrer ${EC.e(sum(x=>!x.en&&!x.prev))}</span><span class="pill a" title="Enregistré, fin de période (ou date de réalisation) dépassée">À facturer ${EC.e(sum(x=>x.en&&!x.f&&ecDue(x)))}</span>${sum(x=>x.en&&!x.f&&!ecDue(x))?`<span class="pill g" title="Enregistré, à facturer une fois la fin de période (ou la date de réalisation) dépassée">Enregistré, à facturer plus tard ${EC.e(sum(x=>x.en&&!x.f&&!ecDue(x)))}</span>`:''}<span class="pill ok">Facturé ${EC.e(sum(x=>x.f))}</span><span class="pill b">dont connexes ${EC.e(sum(x=>x.t!=='L'))}</span>${sum(x=>x.prev)?`<span class="pill g">Prévu ${EC.e(sum(x=>x.prev))}</span>`:''}</div>
+ <div class="ect"><span>Total ${EC.e(sum(()=>1))}</span><span class="pill p" title="Somme de tous les termes enregistrés (facturés ou non) depuis le début de la location">Enregistré depuis le début ${EC.e(sum(x=>x.en))}</span><span class="pill r">À enregistrer ${EC.e(sum(x=>!x.en&&!x.prev))}</span><span class="pill a" title="Enregistré, fin de période (ou date de réalisation) dépassée">À facturer ${EC.e(sum(x=>x.en&&!x.f&&ecDue(x)))}</span>${sum(x=>x.en&&!x.f&&!ecDue(x))?`<span class="pill g" title="Enregistré, à facturer une fois la fin de période (ou la date de réalisation) dépassée">Enregistré, à facturer plus tard ${EC.e(sum(x=>x.en&&!x.f&&!ecDue(x)))}</span>`:''}<span class="pill ok">Facturé ${EC.e(sum(x=>x.f))}</span><span class="pill b">dont connexes ${EC.e(sum(x=>(x.t==='H'?x.ht:x.t)!=='L'))}</span>${sum(x=>x.prev)?`<span class="pill g">Prévu ${EC.e(sum(x=>x.prev))}</span>`:''}</div>
  ${hid.length?`<button class="btn sm" data-ecall="1" style="margin:4px 0">Afficher les ${hid.length} lignes plus anciennes (facturées)</button>`:ECALL&&fac.length>4?`<button class="btn sm" data-ecall="0" style="margin:4px 0">Masquer les lignes anciennes</button>`:''}`;
- const row=x=>{const per=x.t==='L'?`${EC.f(x.s)} → ${EC.f(x.e)}<br><span class="sub">${x.ff?'forfait · ':''}${x.days} j${x.pr?` sur ${x.full} (prorata)`:''}</span>${x.hors?'<br><span class="pill r ec2">hors commande</span>':''}`:x.t==='A'?`${x.s?'Réalisé le '+EC.f(x.s):'Date ?'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`:x.t==='X'?`${x.s?'Le '+EC.f(x.s):'Date ?'}<br><span class="sub">${esc(((x.au.d||'').split('\n')[0]||'—').slice(0,60))}</span>`:`${x.s?'Retour le '+EC.f(x.s):'Retour non planifié'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`;
+ const row=x=>{if(x.t==='H')return gphRow(a,x,ro);const per=x.t==='L'?`${EC.f(x.s)} → ${EC.f(x.e)}<br><span class="sub">${x.ff?'forfait · ':''}${x.days} j${x.pr?` sur ${x.full} (prorata)`:''}</span>${x.hors?'<br><span class="pill r ec2">hors commande</span>':''}`:x.t==='A'?`${x.s?'Réalisé le '+EC.f(x.s):'Date ?'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`:x.t==='X'?`${x.s?'Le '+EC.f(x.s):'Date ?'}<br><span class="sub">${esc(((x.au.d||'').split('\n')[0]||'—').slice(0,60))}</span>`:`${x.s?'Retour le '+EC.f(x.s):'Retour non planifié'}${x.own?'':'<br><span class="sub">date RentPlanner</span>'}`;
   const pvm=x.t==='L'?`${EC.mois(x.mp)}${x.dbl>1?`<br><span class="pill a ec2">${x.dbl} tranches ce mois-ci</span>`:''}`:`<input type="month" data-lm="${x.k}" value="${x.mp}" ${ro?'disabled':''} aria-label="Mois prévu d’enregistrement">`;
-  const mo=x.en?`<b>${EC.mois(x.me)}</b>${ro?'':` <button class="ecdtb" data-led="${x.k}" title="Corriger la date d’enregistrement" aria-label="Corriger la date d’enregistrement">✎</button>`}<br><span class="sub">${x.st.eAt?'coché le '+frL(x.st.eAt.slice(0,10)):'d’après « Enregistré jusqu’au »'}</span>${x.me!==x.mp?`<br><span class="sub">prévu ${ecMs(x.mp)}</span>`:''}`:`<span class="sub">prévu</span> ${pvm}${x.late?`<br><span class="pill r ec2">en retard : à enregistrer en ${ecMs(cm)}</span>`:''}`;
+  const mo=x.en?`<b>${EC.mois(x.me)}</b>${ro?'':` <button class="ecdtb" data-led="${x.k}" title="Corriger la date d’enregistrement" aria-label="Corriger la date d’enregistrement">✎</button>`}<br><span class="sub">${x.st.eAt?'coché le '+frL(x.st.eAt.slice(0,10)):x.gs&&x.gs.length&&x.st.e==null?'d’après GPIC':'d’après « Enregistré jusqu’au »'}</span>${x.me!==x.mp?`<br><span class="sub">prévu ${ecMs(x.mp)}</span>`:''}`:`<span class="sub">prévu</span> ${pvm}${x.late?`<br><span class="pill r ec2">en retard : à enregistrer en ${ecMs(cm)}</span>`:''}`;
   const cls=[x.m===cm?'ecm':'',x.late?'eclate':''].join(' ');
-  return`<tr class="${cls}"><td><b>${esc(ecDes(x))}</b><br><span class="sub">TERL${x.terl}${X.cds.length>1?` · cde ${esc(x.c.num||'?')}`:''}</span></td><td>${mo}</td><td>${per}</td>
+  return`<tr class="${cls}"><td><b>${esc(ecDes(x))}</b><br><span class="sub">TERL${x.terl}${X.cds.length>1?` · cde ${esc(x.c.num||'?')}`:''}</span>${typeof gphTag==='function'?gphTag(x):''}</td><td>${mo}</td><td>${per}</td>
   <td class="ecv"><input type="number" step="0.01" data-lv="${x.k}" data-ls="${x.s}" value="${x.v}" ${ro?'disabled':''} class="${x.man!=null?'man':''}" aria-label="Montant">${x.man!=null?`<button class="btn sm" data-lr="${x.k}" title="Revenir au montant de la commande : ${EC.e(x.base)}" ${ro?'disabled':''}>↺</button>`:''}${x.pr?`<br><span class="sub">${EC.e(ecR(x.rate))}/j</span>`:''}</td>
   <td class="eccb"><label title="${x.st.eAt?esc((x.st.eBy||'')+' le '+frL(x.st.eAt.slice(0,10))):x.imp&&x.en?'D’après « Enregistré jusqu’au »':''}"><input type="checkbox" data-le="${x.k}" ${x.en?'checked':''} ${ro||x.f?'disabled':''}> Enregistré</label><br><label title="${x.st.fAt?esc((x.st.fBy||'')+' le '+frL(x.st.fAt.slice(0,10))):''}"><input type="checkbox" data-lf="${x.k}" ${x.f?'checked':''} ${ro?'disabled':''}> Facturé</label></td>
   <td><button class="btn sm" data-gp="${x.k}">${ECGP===x.k?'Fermer':'GPIC'}</button></td></tr>${ECGP===x.k?gpRow(a,x):''}`};
@@ -2343,7 +2360,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='24/11/2026 11h30';
+const RP_VER='24/11/2026 17h30';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -2478,6 +2495,280 @@ function mgSugH(a){const S=mgSug(a),m=mgi(a),b=(k,v)=>CAN()?` <button class="btn
 {const h0=mgH;mgH=function(a){const h=h0(a);try{const i=h.indexOf('<table class="mgt">');if(i>0)return h.slice(0,i)+'<div id="mg-sugw"></div>'+h.slice(i)}catch(e){}return h}}
 {const c0=mgCalc;mgCalc=function(){const r=c0.apply(this,arguments);try{const w=$('#mg-sugw');if(w&&cur)w.innerHTML=mgSugH(cur)}catch(e){console.error(e)}return r}}
 $('#da').addEventListener('click',e=>{const b=e.target.closest('[data-mgs]');if(!b||!cur||!CAN())return;const m=mgi(cur),v=parseFloat(b.dataset.v);if(isNaN(v))return;if(b.dataset.mgs==='pv')m.pvM=v;else m.miM=v;save();mgRender()});
+
+/* ===== Reprise d'une ancienne location =====
+   On ne ressaisit pas tout l'historique (commande initiale, avenants…) : on colle le texte de la commande client,
+   RentPilot repère les postes, coche ceux du dernier avenant, et prépare la commande en cours.
+   La date de reprise dit jusqu'où c'est déjà enregistré / facturé dans l'ERP : les termes antérieurs sont considérés comme traités. */
+let REPED=null;
+const RPMO={janvier:1,fevrier:2,février:2,mars:3,avril:4,mai:5,juin:6,juillet:7,aout:8,août:8,septembre:9,octobre:10,novembre:11,decembre:12,décembre:12};
+const rpNum=s=>{const v=parseFloat(String(s||'').replace(/[\s  .]/g,'').replace(',','.'));return isNaN(v)?0:v};
+const rpDate=s=>{const m=String(s||'').match(/(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/);if(!m)return'';let y=+m[3];if(y<100)y+=2000;return`${y}-${p2(+m[2])}-${p2(+m[1])}`};
+const RPU={MO:'M',MOIS:'M',SEM:'S',SEMAINE:'S',JR:'J',J:'J',JOUR:'J',JOURS:'J'};
+/* type proposé pour un poste : L = lot location, L+ = s'ajoute au loyer, A:clé / R:clé = connexes, X = autre prestation */
+function rpGuess(p){const d=(p.des+' '+p.txt.slice(0,400)).toLowerCase(),tu=p.det.some(x=>RPU[x.u]);
+ if(tu&&/location|loyer|lou[ée]/.test(p.des.toLowerCase())&&!/armoire|coffret|bungalow/.test(p.des.toLowerCase()))return'L';
+ if(tu)return'L+';
+ const K=[[/transport\s+retour|retour\s+(du\s+)?transport/,'R:transpR'],[/transport(\s+aller)?/,'A:transpA'],[/d[ée]connexion\s+[ée]lec/,'R:decoE'],[/d[ée]chargement|mise en place|remontage|raccordement hydrau/,'A:instal'],[/repli|d[ée]montage|rechargement|(^|[\s,(])chargement/,'R:repli'],
+  [/grutage.*retour|retour.*grutage/,'R:grutR'],[/grutage|levage/,'A:grutA'],[/contr[ôo]le.{0,20}mise en service|organisme notifi|\bcms\b/,'A:cms'],[/mise en service|\bmes\b/,'A:mes'],
+  [/raccordement\s+[ée]lec/,'A:elec'],[/supervision/,'A:superv'],[/d[ée]chargement|mise en place|remontage|raccordement hydrau/,'A:instal']];
+ for(const[re,k]of K)if(re.test(p.des.toLowerCase())||re.test(d.slice(0,120)))return k;return'X'}
+function rpParse(t){t=String(t||'').replace(/ | /g,' ').replace(/\r/g,'');const out={num:'',postes:[],av:null};
+ const cm=t.match(/Commande\s*(?:n[°o]\s*)?:?\s*([A-Z0-9][A-Z0-9_\-\/]{5,})/i);if(cm)out.num=cm[1];
+ /* avenants : « Avenant du 04/03/2025 : postes 32, 33 et 34 » → le plus récent */
+ const AV=[...t.matchAll(/Avenant\s+du\s+([\d./-]+)\s*:?\s*(?:postes?\s+([\d ,et]+))?/gi)].map(m=>({d:rpDate(m[1]),p:(m[2]||'').match(/\d+/g)||[]})).filter(x=>x.d).sort((a,b)=>b.d.localeCompare(a.d));
+ if(AV.length)out.av=AV[0];
+ const re=/(?:^|\n)[ \t]*(\d{1,3})\s+(\d+,\d{2,3})\s+([A-Z]{1,6})\s+([\d .]*\d,\d{2})\s*EUR/g,H=[];let m;while((m=re.exec(t)))H.push({n:+m[1],i:m.index,end:re.lastIndex,val:rpNum(m[4])});
+ /* garde une suite croissante de numéros de poste */
+ const S=[];H.forEach(h=>{if(!S.length||h.n>S[S.length-1].n)S.push(h)});
+ S.forEach((h,k)=>{const txt=t.slice(h.end,k+1<S.length?S[k+1].i:t.length),dm=txt.match(/Notre\s+r[ée]f\.?\s*:\s*([^\n]+)/i),first=txt.split('\n').map(x=>x.trim()).find(x=>x&&!/^\d/.test(x))||'';
+  const det=[...txt.matchAll(/(\d+(?:,\d+)?)\s+([A-Z]{1,8})\s+([\d .]*\d,\d{2})\s*EUR\s*\/\s*1\s*(?:[A-Z]{1,8})?\s*([\d .]*\d,\d{2})/g)].map(x=>({q:rpNum(x[1]),u:x[2],pu:rpNum(x[3]),v:rpNum(x[4])})).filter(x=>x.v>0&&!(x.q===1&&x.u==='UP'&&Math.abs(x.v-h.val)<.01&&false));
+  let debut='',fin='';const per=txt.match(/p[ée]riode\s+de\s+location\s+de\s+([a-zéû]+)\s+(\d{4})\s+[àa]\s+([a-zéû]+)\s+(\d{4})/i);
+  if(per&&RPMO[per[1].toLowerCase()])debut=`${per[2]}-${p2(RPMO[per[1].toLowerCase()])}-01`;
+  const du=txt.match(/du\s+(\d{1,2}[./]\d{1,2}[./]\d{2,4})\s+au\s+(\d{1,2}[./]\d{1,2}[./]\d{2,4})/i);if(!debut&&du){debut=rpDate(du[1]);fin=rpDate(du[2])}
+  const dl=txt.match(/Date\s*(?:de\s*)?(?:livraison\s*:?\s*)?(\d{2}[./]\d{2}[./]\d{4})/i),dliv=dl?rpDate(dl[1]):'';
+  const des=(dm?dm[1]:first).replace(/\s{2,}/g,' ').trim(),dev=txt.match(/DEV\s?(\d{6,})/i),rev=txt.match(/REV\s?(\d{1,3})/i);
+  const p={n:h.n,val:h.val,des,txt,det,debut:debut||dliv,dliv,fin,devis:dev?'DEV'+dev[1]:'',rev:rev?'REV'+p2(+rev[1]):''};p.ty=rpGuess(p);out.postes.push(p)});
+ /* postes du dernier avenant cochés par défaut ; sinon ceux à partir de la dernière location */
+ let sel=out.av&&out.av.p.length?out.av.p.map(Number):null;
+ if(!sel){const Ls=out.postes.filter(p=>p.ty==='L').sort((a,b)=>(a.debut||'').localeCompare(b.debut||''));const lastL=Ls[Ls.length-1];sel=lastL?out.postes.filter(p=>p.n>=lastL.n).map(p=>p.n):out.postes.map(p=>p.n)}
+ out.postes.forEach(p=>p.on=sel.includes(p.n));return out}
+function rpBuild(a,R,hdr){const P=R?R.postes.filter(p=>p.on&&p.ty!=='ign'):[],lots=[],Pl={id:uid(),t:'P',pA:[],pR:[],mt:{},dA:'',dR:'',aut:[]};
+ P.filter(p=>p.ty==='L').sort((x,y)=>(x.debut||'').localeCompare(y.debut||'')).forEach(p=>{const tl=p.det.filter(d=>RPU[d.u]),d0=tl[0];
+  lots.push({id:uid(),t:'L',debut:p.debut||'',u:d0?RPU[d0.u]:'M',dur:1,nb:d0?d0.q:'',loyer:ecR(tl.reduce((s,d)=>s+d.pu,0))||'',opt:[],equip:'',libre:'',_src:p.n})});
+ P.filter(p=>p.ty==='L+').forEach(p=>{const L0=lots.find(l=>l.t==='L');const tl=p.det.filter(d=>RPU[d.u]);if(L0&&tl.length){L0.loyer=ecR((+L0.loyer||0)+tl.reduce((s,d)=>s+d.pu,0));L0.libre=[L0.libre,`dont ${p.des} : ${EC.e(tl.reduce((s,d)=>s+d.pu,0))} par terme`].filter(Boolean).join(' ; ')}else Pl.aut.push({id:uid(),d:p.des,v:p.val,date:p.dliv||p.debut||''})});
+ P.filter(p=>/^[AR]:/.test(p.ty)).forEach(p=>{const[sd,k]=p.ty.split(':'),arr=sd==='A'?Pl.pA:Pl.pR;if(arr.includes(k)){Pl.aut.push({id:uid(),d:p.des,v:p.val,date:p.dliv||''});return}arr.push(k);Pl.mt[k]=p.val});
+ P.filter(p=>p.ty==='X').forEach(p=>{const d=p.det.length>1||(p.det[0]&&p.det[0].q>1&&p.det[0].u==='UP')?`${p.des} (${p.det.map(x=>`${String(x.q).replace('.',',')} × ${EC.e(x.pu)}`).join(' + ')})`:p.des;Pl.aut.push({id:uid(),d,v:p.val,date:p.dliv||p.debut||''})});
+ if(Pl.pA.length||Pl.pR.length||Pl.aut.length)lots.push(Pl);
+ if(!lots.some(l=>l.t==='L')&&!P.length)lots.unshift(ecNewL(a));
+ const L0=P.find(p=>p.ty==='L')||P[0]||{};
+ return{id:'c'+uid(),num:hdr.num,devis:hdr.devis||L0.devis||'',rev:hdr.rev||L0.rev||'',ctr:hdr.ctr||'',total:P.length?ecR(P.reduce((s,p)=>s+p.val,0)):'',lots,_new:true}}
+const RPT=[['L','Lot location'],['L+','Ajouter au loyer'],['A:transpA','Aller : transport'],['A:grutA','Aller : grutage'],['A:instal','Aller : installation'],['A:elec','Aller : raccord. électrique'],['A:superv','Aller : supervision'],['A:mes','Aller : mise en service'],['A:cms','Aller : contrôle MES (CMS)'],['R:decoE','Retour : déconnexion élec.'],['R:repli','Retour : repli / chargement'],['R:grutR','Retour : grutage'],['R:transpR','Retour : transport'],['X','Autre prestation'],['ign','Ignorer']];
+function rpH(a){const S=REPED,R=S.R,today=EC.td(),lastM=EC.s(EC.n(today.slice(0,7)+'-01')-1),fd=d=>ecD(d)||'',v=k=>esc(S.h[k]||'');
+ const rows=R&&R.postes.length?`<div class="tw"><table class="ectb rptb"><thead><tr><th></th><th>Poste</th><th>Désignation</th><th>Détail</th><th>Montant</th><th>Date / début</th><th>Mettre en</th></tr></thead><tbody>${R.postes.map((p,i)=>(!S.all&&!p.on)?'':`<tr class="${p.on?'':'off'}"><td><input type="checkbox" data-rpo="${i}" ${p.on?'checked':''} aria-label="Reprendre le poste ${p.n}"></td><td>${p.n}</td><td>${esc(p.des)}${p.fin?`<br><span class="sub">jusqu’au ${EC.f(p.fin)}</span>`:''}</td><td class="sub">${p.det.map(d=>`${String(d.q).replace('.',',')} ${esc(d.u)} × ${EC.e(d.pu)}`).join('<br>')||'—'}</td><td class="fmv">${EC.e(p.val)}</td><td><input type="date" data-rpd="${i}" value="${fd(p.debut)}" aria-label="Date du poste ${p.n}"></td><td><select data-rpt="${i}" aria-label="Type du poste ${p.n}">${RPT.map(([k,l])=>`<option value="${k}" ${p.ty===k?'selected':''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>
+  ${R.postes.some(p=>!p.on)?`<button class="btn sm" data-rpall="1">${S.all?'Masquer les postes non cochés':`Afficher les ${R.postes.filter(p=>!p.on).length} autres postes (historique)`}</button>`:''}
+  <p class="sub">${R.av?`Dernier avenant détecté : <b>${EC.f(R.av.d)}</b>${R.av.p.length?` (postes ${R.av.p.join(', ')})`:''} : ses postes sont cochés.`:'Pas d’avenant détecté : les postes à partir de la dernière location sont cochés.'} Vérifie les cases et le type de chaque poste.</p>`
+  :R?'<p class="sub">Aucun poste reconnu dans ce texte. Tu peux quand même préparer la commande et la remplir à la main.</p>':'';
+ return`<div class="ecform rpw"><h5>📥 Reprendre une commande existante</h5>
+ <p class="sub" style="margin-top:0">Pour une location déjà en cours, pas besoin de ressaisir tout l’historique. Saisis seulement la commande ou l’avenant <b>en cours</b>, puis indique jusqu’où c’est déjà enregistré et facturé dans l’ERP : les termes d’avant sont considérés comme traités (ni campagne, ni alerte).</p>
+ <div class="rpst"><b>1 · La commande client</b> <span class="sub">(facultatif)</span></div>
+ <label class="w">Ouvre le PDF de la commande, fais Ctrl+A puis Ctrl+C, et colle ici. RentPilot repère les postes, les montants et le dernier avenant.<textarea id="rp-txt" rows="4" placeholder="Colle ici le texte de la commande client…">${esc(S.txt||'')}</textarea></label>
+ <div><button class="btn" data-rpan="1">🔎 Analyser le texte</button></div>
+ ${rows}
+ <div class="fm ecf"><label>N° de commande client<input data-rph="num" value="${v('num')}"></label><label>N° de devis<input data-rph="devis" value="${v('devis')}" placeholder="DEV00037518"></label><label>Révision<input data-rph="rev" value="${v('rev')}" placeholder="REV11"></label><label>N° de contrat (facultatif)<input data-rph="ctr" value="${v('ctr')}"></label></div>
+ <div class="rpst"><b>2 · Le point de reprise</b></div>
+ <div class="fm ecf"><label>Déjà enregistré dans l’ERP jusqu’au<input type="date" id="rp-enr" value="${fd(S.enr)}"></label><label>Déjà facturé jusqu’au<input type="date" id="rp-fac" value="${fd(S.fac)}"></label></div>
+ <p class="sub">Exemple : enregistré jusqu’au 30/09/2026 → le loyer de septembre est considéré comme enregistré, celui d’octobre est à enregistrer. Pré-rempli avec les dates « jusqu’au » de la fiche quand elles existent, sinon avec la fin du mois dernier (${EC.f(lastM)}).</p>
+ <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn" data-rpx="1">Annuler</button><button class="btn p" data-rpgo="1">Préparer la commande →</button></div>
+ <p class="sub" style="text-align:right;margin:4px 0 0">Tu pourras tout vérifier et corriger dans le formulaire de commande, avec l’aperçu de l’échéancier, avant d’enregistrer.</p></div>`}
+function rpCollect(){const S=REPED;if(!S)return;const ta=$('#rp-txt');if(ta)S.txt=ta.value;document.querySelectorAll('[data-rph]').forEach(i=>S.h[i.dataset.rph]=i.value.trim());
+ const e=$('#rp-enr'),f=$('#rp-fac');if(e)S.enr=e.value;if(f)S.fac=f.value;
+ if(S.R)S.R.postes.forEach((p,i)=>{const c=document.querySelector(`[data-rpo="${i}"]`),d=document.querySelector(`[data-rpd="${i}"]`),t=document.querySelector(`[data-rpt="${i}"]`);if(c)p.on=c.checked;if(d)p.debut=d.value;if(t)p.ty=t.value})}
+/* bandeau de reprise dans l'échéancier */
+function rpBan(a){if(!a.rep||!(a.rep.enr||a.rep.fac))return'';const ro=!CAN();
+ if(REPED&&REPED.edit===a)return`<div class="rpban"><b>↩ Reprise</b><label>Enregistré jusqu’au <input type="date" id="rpb-enr" value="${ecD(a.rep.enr)}"></label><label>Facturé jusqu’au <input type="date" id="rpb-fac" value="${ecD(a.rep.fac)}"></label><button class="btn sm p" data-rpbs="1">Enregistrer</button><button class="btn sm" data-rpbx="1">Annuler</button></div>`;
+ return`<div class="rpban"><span><b>↩ Reprise d’une ancienne location</b> : déjà enregistré jusqu’au <b>${EC.f(a.rep.enr)||'—'}</b>, facturé jusqu’au <b>${EC.f(a.rep.fac)||'—'}</b>. Les termes d’avant sont considérés comme traités dans l’ERP.</span>${ro?'':'<button class="btn sm" data-rpb="1">Modifier</button>'}</div>`}
+{const h0=ecH;ecH=function(a){if(REPED&&REPED.a===a&&!REPED.edit)return`<div id="ecbh">${rpH(a)}</div><div id="ecbb"></div>`;let h=h0.apply(this,arguments);
+ if(CAN())h=h.replace('>+ Ajouter une commande client</button>','>+ Ajouter une commande client</button> <button class="btn" data-rpopen="1" style="margin:6px 0" title="Ancienne location : saisir seulement la commande en cours et le point de reprise">📥 Reprendre une commande existante</button>');
+ return h.replace('<div id="ecbh">','<div id="ecbh">'+rpBan(a))}}
+const rpRender=()=>{const f=document.activeElement;if(f&&f.blur)f.blur();ecRender()};
+$('#da').addEventListener('click',e=>{const t=e.target.closest('button');if(!t||!cur)return;const D_=t.dataset;
+ if(D_.rpopen){const a=cur;REPED={a,h:{},txt:'',R:null,enr:ecD(a.rep&&a.rep.enr)||ecD(a.finEnreg)||EC.s(EC.n(EC.td().slice(0,7)+'-01')-1),fac:ecD(a.rep&&a.rep.fac)||ecD(a.finFac)||ecD(a.finEnreg)||EC.s(EC.n(EC.td().slice(0,7)+'-01')-1)};ECED=null;rpRender();setTimeout(()=>{const x=$('#rp-txt');if(x)x.focus()},30)}
+ if(D_.rpan&&REPED){rpCollect();const R=rpParse(REPED.txt);REPED.R=R;if(R.num&&!REPED.h.num)REPED.h.num=R.num;const L0=R.postes.find(p=>p.on&&p.ty==='L');if(L0){if(!REPED.h.devis)REPED.h.devis=L0.devis;if(!REPED.h.rev)REPED.h.rev=L0.rev}
+  rpRender();if(!R.postes.length)toast('Aucun poste reconnu : vérifie que tout le texte de la commande est collé.');else toast(`${R.postes.length} postes reconnus, ${R.postes.filter(p=>p.on).length} cochés.`)}
+ if(D_.rpall&&REPED){rpCollect();REPED.all=!REPED.all;rpRender()}
+ if(D_.rpx){REPED=null;rpRender()}
+ if(D_.rpgo&&REPED){rpCollect();const a=REPED.a,c=rpBuild(a,REPED.R,REPED.h);
+  /* reprise et début de facturation posés tout de suite (l'aperçu en tient compte) ; « Annuler » les remet comme avant */
+  const undo={rep:a.rep?{...a.rep}:null,facDeb:a.facDeb||''};if(REPED.enr||REPED.fac)a.rep={enr:REPED.enr||'',fac:REPED.fac||''};
+  const d=c.lots.filter(l=>l.t==='L'&&ecD(l.debut)).map(l=>ecD(l.debut)).sort()[0];if(d&&(!ecD(a.facDeb)||ecD(a.facDeb)<d)&&(!ecD(a.livDate)||ecD(a.livDate)<d))a.facDeb=d;
+  ECED={a,c,rep:a.rep,undo};REPED=null;rpRender();setTimeout(()=>{ecPrev&&ecPrev();const f=$('.ecform');if(f)f.scrollIntoView({block:'start',behavior:'smooth'})},40);
+  toast('Commande préparée : vérifie les lots, puis « Enregistrer la commande ».')}
+ if(D_.rpb){REPED={edit:cur};rpRender()}
+ if(D_.rpbx){REPED=null;rpRender()}
+ if(D_.rpbs&&CAN()){const en=$('#rpb-enr').value,fa=$('#rpb-fac').value;cur.rep={enr:en,fac:fa};/* les coches figées sans date (jamais cliquées) repassent en « d'après la reprise » */Object.values(cur.lig||{}).forEach(x=>{if(x&&!x.eAt&&!x.fAt&&!x.eAt0){delete x.e;delete x.f}});rpLog(cur,'modifiée');REPED=null;ecSync(cur);save();render();refreshD()}});
+$('#da').addEventListener('change',e=>{if(!REPED||!REPED.R)return;const t=e.target;if(t.dataset&&(t.dataset.rpo!=null)){rpCollect();const tr=t.closest('tr');if(tr)tr.classList.toggle('off',!t.checked)}});
+function rpLog(a,w){a.com=a.com||[];a.com.push({d:new Date().toISOString(),t:`↩ Reprise ${w} : déjà enregistré jusqu’au ${EC.f(a.rep.enr)||'—'}, facturé jusqu’au ${EC.f(a.rep.fac)||'—'}`})}
+/* enregistrement : trace ; annulation : on remet la reprise et le début de facturation d'avant */
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ecsave],[data-eccancel]');if(!t||!ECED||!ECED.undo||!cur)return;const a=ECED.a;
+ if(t.dataset.eccancel){if(ECED.undo.rep)a.rep=ECED.undo.rep;else delete a.rep;if(ECED.undo.facDeb)a.facDeb=ECED.undo.facDeb;else delete a.facDeb;ECED.undo=null;return}
+ if(a.rep&&(a.rep.enr||a.rep.fac))rpLog(a,'enregistrée');ECED.undo=null},true);
+
+/* ===== Lecteurs de fichiers sans bibliothèque externe : Excel 97 (.xls), Excel (.xlsx via JSZip), CSV, page HTML, texte d'un PDF ===== */
+/* --- .xls (BIFF8 dans un conteneur OLE) --- */
+function rdXls(buf){const u=new Uint8Array(buf),dv=new DataView(buf),r16=o=>dv.getUint16(o,true),r32=o=>dv.getUint32(o,true);
+ if(r32(0)!==0xE011CFD0)throw new Error('Pas un fichier Excel 97');
+ const ss=1<<r16(30),mss=1<<r16(32),nFat=r32(44),dir0=r32(48),cut=r32(56),mfat0=r32(60),difat0=r32(68),nDifat=r32(72);
+ const off=s=>(s+1)*ss,fatS=[];for(let i=0;i<109&&fatS.length<nFat;i++){const s=r32(76+i*4);if(s<0xFFFFFFFA)fatS.push(s)}
+ let d=difat0;for(let k=0;k<nDifat&&d<0xFFFFFFFA;k++){const per=ss/4-1;for(let i=0;i<per&&fatS.length<nFat;i++){const s=r32(off(d)+i*4);if(s<0xFFFFFFFA)fatS.push(s)}d=r32(off(d)+per*4)}
+ const FAT=[];fatS.forEach(s=>{for(let i=0;i<ss/4;i++)FAT.push(r32(off(s)+i*4))});
+ const chain=s=>{const c=[];let g=0;while(s<0xFFFFFFFA&&g++<1e6){c.push(s);s=FAT[s]}return c};
+ const read=(s,size)=>{const c=chain(s),o=new Uint8Array(c.length*ss);c.forEach((x,i)=>o.set(u.subarray(off(x),off(x)+ss),i*ss));return size!=null?o.subarray(0,size):o};
+ const dir=read(dir0),ents=[];for(let i=0;i+128<=dir.length;i+=128){const dvd=new DataView(dir.buffer,dir.byteOffset+i,128),nl=dvd.getUint16(64,true);let nm='';for(let k=0;k<nl/2-1;k++)nm+=String.fromCharCode(dvd.getUint16(k*2,true));ents.push({nm,t:dir[i+66],s:dvd.getUint32(116,true),z:dvd.getUint32(120,true)})}
+ const wb=ents.find(e=>/^(Workbook|Book)$/i.test(e.nm));if(!wb)throw new Error('Classeur introuvable');let W;
+ if(wb.z<cut){const root=ents[0],ms=read(root.s,root.z),MF=[];chain(mfat0).forEach(s=>{for(let i=0;i<ss/4;i++)MF.push(r32(off(s)+i*4))});W=new Uint8Array(Math.ceil(wb.z/mss)*mss);let s=wb.s,i=0;while(s<0xFFFFFFFA&&i*mss<wb.z){W.set(ms.subarray(s*mss,s*mss+mss),i*mss);s=MF[s];i++}W=W.subarray(0,wb.z)}
+ else W=read(wb.s,wb.z);
+ const B=new DataView(W.buffer,W.byteOffset,W.byteLength),recs=[];for(let p=0;p+4<=W.length;){const t=B.getUint16(p,true),l=B.getUint16(p+2,true);recs.push({t,o:p+4,l});p+=4+l}
+ let d1904=false;const sst=[],sheets=[];
+ for(let i=0;i<recs.length;i++){const r=recs[i];if(r.t===0x22)d1904=B.getUint16(r.o,true)===1;if(r.t===0x85)sheets.push({pos:B.getUint32(r.o,true),hid:W[r.o+4]});
+  if(r.t===0xFC){/* table des chaînes, avec ses CONTINUE */const parts=[r];for(let j=i+1;j<recs.length&&recs[j].t===0x3C;j++)parts.push(recs[j]);let pi=0,p=r.o+8,end=r.o+r.l;const n=B.getUint32(r.o+4,true);
+   const next=()=>{pi++;if(pi>=parts.length)return false;p=parts[pi].o;end=p+parts[pi].l;return true};
+   const rb=()=>{if(p>=end&&!next())return 0;return W[p++]},rw=()=>rb()|(rb()<<8),rd=()=>(rw()|(rw()<<16))>>>0;
+   for(let k=0;k<n;k++){const cch=rw();const fl=rb();let hi=fl&1;const runs=fl&8?rw():0,ext=fl&4?rd():0;let s='',left=cch,guard=0;
+    while(left>0&&guard++<100000){if(p>=end){if(!next())break;hi=W[p++]&1;continue}const avail=hi?Math.floor((end-p)/2):end-p;if(avail<=0){p=end;continue}const take=Math.min(left,avail);
+     for(let q=0;q<take;q++){s+=String.fromCharCode(hi?W[p]|(W[p+1]<<8):W[p]);p+=hi?2:1}left-=take}
+    let skip=runs*4+ext;while(skip>0){if(p>=end&&!next())break;const t2=Math.min(skip,end-p);p+=t2;skip-=t2}sst.push(s)}}}
+ const rk=v=>{let n;if(v&2)n=v>>2;else{const b=new DataView(new ArrayBuffer(8));b.setUint32(4,v&0xFFFFFFFC,true);n=b.getFloat64(0,true)}return v&1?n/100:n};
+ const str8=o=>{const cch=B.getUint16(o,true),hi=W[o+2]&1;let s='';for(let k=0;k<cch;k++)s+=String.fromCharCode(hi?B.getUint16(o+3+k*2,true):W[o+3+k]);return s};
+ const sh=sheets.find(s=>!s.hid)||sheets[0];const rows=[];const set=(r,c,v)=>{(rows[r]=rows[r]||[])[c]=v};let inSh=!sh,pend=null;
+ for(const r of recs){const abs=r.o-4;if(!inSh){if(abs===sh.pos)inSh=true;continue}
+  if(r.t===0x0A)break;if(r.l<6)continue;const row=B.getUint16(r.o,true),col=B.getUint16(r.o+2,true);
+  if(r.t===0xFD)set(row,col,sst[B.getUint32(r.o+6,true)]);else if(r.t===0x203)set(row,col,B.getFloat64(r.o+6,true));else if(r.t===0x27E)set(row,col,rk(B.getUint32(r.o+6,true)));
+  else if(r.t===0xBD){const last=B.getUint16(r.o+r.l-2,true);for(let c=col,o=r.o+4;c<=last;c++,o+=6)set(row,c,rk(B.getUint32(o+2,true)))}
+  else if(r.t===0x204)set(row,col,str8(r.o+6));
+  else if(r.t===0x06){if(B.getUint16(r.o+12,true)===0xFFFF){if(W[r.o+6]===0)pend=[row,col]}else set(row,col,B.getFloat64(r.o+6,true))}
+  else if(r.t===0x207&&pend){set(pend[0],pend[1],str8(r.o));pend=null}}
+ return{rows:Array.from(rows,r=>r||[]),d1904}}
+/* --- .xlsx (JSZip est déjà dans RentPilot) --- */
+async function rdXlsx(buf){const z=await JSZip.loadAsync(buf),P=new DOMParser(),x=async n=>{const f=z.file(n);return f?P.parseFromString(await f.async('string'),'application/xml'):null};
+ const sst=[],S=await x('xl/sharedStrings.xml');if(S)[...S.getElementsByTagName('si')].forEach(si=>sst.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join('')));
+ const wbk=await x('xl/workbook.xml'),d1904=!!(wbk&&wbk.querySelector('workbookPr[date1904="1"],workbookPr[date1904="true"]'));
+ const name=Object.keys(z.files).filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort()[0],ws=await x(name),rows=[];
+ const ci=ref=>{let c=0;for(const ch of ref.replace(/\d+/g,''))c=c*26+ch.charCodeAt(0)-64;return c-1};
+ [...ws.getElementsByTagName('c')].forEach(c=>{const ref=c.getAttribute('r'),r=+ref.replace(/\D+/g,'')-1,t=c.getAttribute('t'),v=c.getElementsByTagName('v')[0],is=c.getElementsByTagName('is')[0];
+  const val=t==='s'?sst[+(v&&v.textContent)]:t==='inlineStr'?(is?is.textContent:''):t==='str'?(v?v.textContent:''):v?+v.textContent:'';(rows[r]=rows[r]||[])[ci(ref)]=val});return{rows:Array.from(rows,r=>r||[]),d1904}}
+/* --- CSV / texte tabulé / tableau HTML (export « .xls » qui est en fait une page) --- */
+function rdCsv(t){const L=t.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim()),sep=[';','\t',','].map(s=>[s,(L[0]||'').split(s).length]).sort((a,b)=>b[1]-a[1])[0][0];
+ return{rows:L.map(l=>{const o=[];let cur='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'&&l[i+1]==='"'){cur+='"';i++}else if(ch==='"')q=false;else cur+=ch}else if(ch==='"')q=true;else if(ch===sep){o.push(cur);cur=''}else cur+=ch}o.push(cur);return o}),d1904:false}}
+function rdHtml(t){const d=new DOMParser().parseFromString(t,'text/html'),T=[...d.querySelectorAll('table')].sort((a,b)=>b.rows.length-a.rows.length)[0];if(!T)return{rows:[]};return{rows:[...T.rows].map(r=>[...r.cells].map(c=>c.textContent.trim()))}}
+async function rdSheet(file){const buf=await file.arrayBuffer(),u=new Uint8Array(buf.slice(0,8)),head=String.fromCharCode(...u);
+ if(u[0]===0xD0&&u[1]===0xCF)return rdXls(buf);if(head.startsWith('PK'))return rdXlsx(buf);
+ let txt=new TextDecoder('utf-8').decode(buf);if(txt.includes('\uFFFD'))txt=new TextDecoder('windows-1252').decode(buf);
+ if(/^\s*</.test(txt))return rdHtml(txt);return rdCsv(txt)}
+const xlDate=(v,d1904)=>{if(typeof v==='number'&&v>20000&&v<80000){const ms=Math.round((v-(d1904?24107:25569))*864e5);return new Date(ms).toISOString().slice(0,10)}
+ const s=String(v==null?'':v).trim();let m=s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);if(m){let y=+m[3];if(y<100)y+=2000;return`${y}-${String(+m[2]).padStart(2,'0')}-${String(+m[1]).padStart(2,'0')}`}
+ m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:''};
+
+/* --- texte d'un PDF (polices standard et ToUnicode), lignes reconstituées par position --- */
+async function rdPdfText(buf){const u=new Uint8Array(buf),L1=new TextDecoder('latin1'),src=L1.decode(u);
+ const inflate=async b=>{try{const ds=new DecompressionStream('deflate'),w=ds.writable.getWriter();w.write(b).catch(()=>{});w.close().catch(()=>{});return new Uint8Array(await new Response(ds.readable).arrayBuffer())}catch(e){return null}};
+ const streams=[];const re=/(\d+)\s+0\s+obj([\s\S]*?)stream\r?\n/g;let m;
+ while((m=re.exec(src))){const dict=m[2].split(/\d+\s+0\s+obj/).pop(),st=re.lastIndex,en=src.indexOf('endstream',st);if(en<0)break;let raw=u.subarray(st,en);let e=raw.length;while(e>0&&(raw[e-1]===10||raw[e-1]===13))e--;raw=raw.subarray(0,e);
+  let data=raw;if(/FlateDecode/.test(dict)||(raw[0]===0x78&&/^[\x01\x5e\x9c\xda]$/.test(String.fromCharCode(raw[1])))){data=(await inflate(raw))||raw}streams.push({id:+m[1],dict,txt:L1.decode(data)});re.lastIndex=en}
+ const cmap={};streams.filter(s=>/begincmap/.test(s.txt)).forEach(s=>{const hx=h=>parseInt(h,16),uni=h=>{let o='';for(let i=0;i<h.length;i+=4)o+=String.fromCharCode(hx(h.slice(i,i+4)));return o};
+  for(const b of s.txt.matchAll(/beginbfchar([\s\S]*?)endbfchar/g))for(const x of b[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g))cmap[x[1].toLowerCase()]=uni(x[2]);
+  for(const b of s.txt.matchAll(/beginbfrange([\s\S]*?)endbfrange/g))for(const x of b[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/g)){const a=hx(x[1]),z=hx(x[2]),d=hx(x[3]),w=x[1].length;for(let c=a;c<=z;c++)cmap[c.toString(16).padStart(w,'0')]=String.fromCharCode(d+c-a)}});
+ const W1252={128:'€',130:'‚',131:'ƒ',132:'„',133:'…',134:'†',135:'‡',136:'ˆ',137:'‰',138:'Š',139:'‹',140:'Œ',142:'Ž',145:'‘',146:'’',147:'“',148:'”',149:'•',150:'–',151:'—',152:'˜',153:'™',154:'š',155:'›',156:'œ',158:'ž',159:'Ÿ'};
+ const hasMap=Object.keys(cmap).length>0;
+ const dec=(bytes,hex)=>{if(hex){const h=bytes;if(hasMap){const w=h.length%4===0&&cmap[h.slice(0,4).toLowerCase()]!=null?4:2;let o='';for(let i=0;i<h.length;i+=w)o+=cmap[h.slice(i,i+w).toLowerCase()]??'';return o}let o='';for(let i=0;i<h.length;i+=2)o+=String.fromCharCode(parseInt(h.slice(i,i+2),16));return o}
+  let o='';for(const c of bytes){const n=c.charCodeAt(0);o+=W1252[n]||c}return o};
+ const pages=[];for(const s of streams){if(!/\bBT\b/.test(s.txt)||!/T[jJ]\b/.test(s.txt))continue;const items=[];let x=0,y=0,lx=0,ly=0,TL=0;
+  const toks=s.txt.match(/\((?:\\[\s\S]|[^\\)])*\)|<[0-9a-fA-F\s]*>|\[|\]|\/[^\s/\[\]()<>]+|-?\d*\.?\d+|[A-Za-z'"*]+/g)||[];const st=[];
+  const lit=t=>t.slice(1,-1).replace(/\\([nrtbf()\\]|[0-7]{1,3}|\r?\n)/g,(a,b)=>b==='n'?'\n':b==='r'?'\r':b==='t'?'\t':b==='b'||b==='f'?'':/^[0-7]/.test(b)?String.fromCharCode(parseInt(b,8)):/\n/.test(b)?'':b);
+  const strOf=t=>t[0]==='('?dec(lit(t),false):dec(t.slice(1,-1).replace(/\s/g,''),true);
+  const show=txt=>{if(txt)items.push({x,y,t:txt})};
+  for(let i=0;i<toks.length;i++){const t=toks[i];
+   if(t==='['){const arr=[];let j=i+1;for(;j<toks.length&&toks[j]!==']';j++)arr.push(toks[j]);i=j;st.push(arr);continue}
+   if(/^[A-Za-z'"*]+$/.test(t)){const a=st.splice(0);
+    if(t==='BT'){x=lx=0;y=ly=0}else if(t==='Tm'){const n=a.map(Number);x=lx=n[4]||0;y=ly=n[5]||0}else if(t==='Td'||t==='TD'){const n=a.map(Number);lx+=n[0]||0;ly+=n[1]||0;x=lx;y=ly;if(t==='TD')TL=-(n[1]||0)}
+    else if(t==='TL')TL=+a[0]||0;else if(t==='T*'){ly-=TL;x=lx;y=ly}
+    else if(t==='Tj'||t==="'"||t==='"'){if(t!=='Tj'){ly-=TL;x=lx;y=ly}const sv=a[a.length-1];if(typeof sv==='string'&&/^[(<]/.test(sv))show(strOf(sv))}
+    else if(t==='TJ'){const arr=a[a.length-1];if(Array.isArray(arr)){let o='';arr.forEach(e=>{if(/^[(<]/.test(e))o+=strOf(e);else if(+e<-180)o+=' '});show(o)}}
+    continue}
+   st.push(t)}
+  if(items.length)pages.push(items)}
+ return pages.map(items=>{const rows=new Map();items.forEach(it=>{const k=Math.round(it.y/2);if(!rows.has(k))rows.set(k,[]);rows.get(k).push(it)});
+  return[...rows.entries()].sort((a,b)=>b[0]-a[0]).map(([,r])=>{r.sort((a,b)=>a.x-b.x);let o='',ex=null;r.forEach(it=>{if(ex!=null){const gap=it.x-ex;o+=gap>12?'   ':gap>2?' ':''}o+=it.t;ex=it.x+it.t.length*4.6});return o}).join('\n')}).join('\n\n')}
+
+/* ===== Historique GPIC : import de l'extraction des termes (TERL, libellé, montant, date prév. = enregistrement, date réelle = facturation)
+   Les termes se rattachent tout seuls aux lignes d'une commande déjà saisie sur la même période (loyers par mois, connexes par type / montant) ;
+   les autres restent en « historique GPIC » (lignes en lecture seule dans l'échéancier). Le glisser-déposer accepte aussi la commande client en PDF. */
+const GPHMO={JANVIER:1,FEVRIER:2,FÉVRIER:2,MARS:3,AVRIL:4,MAI:5,JUIN:6,JUILLET:7,AOUT:8,AOÛT:8,SEPTEMBRE:9,OCTOBRE:10,NOVEMBRE:11,DECEMBRE:12,DÉCEMBRE:12,JANUARY:1,FEBRUARY:2,MARCH:3,APRIL:4,MAY:5,JUNE:6,JULY:7,AUGUST:8,SEPTEMBER:9,OCTOBER:10,NOVEMBER:11,DECEMBER:12};
+const gphN=a=>a&&a.gph&&(a.gph.items||[]).length||0;
+function gphParse(R){const rows=R.rows||[],d1904=R.d1904,txt=v=>String(v==null?'':v).trim();
+ const hi=rows.findIndex(r=>r.some(c=>/libell/i.test(txt(c)))&&r.some(c=>/montant/i.test(txt(c))));if(hi<0)return[];
+ const H=rows[hi].map(txt),H2=(rows[hi+1]||[]).map(txt),col=re=>H.findIndex((h,i)=>re.test(h+' '+(H2[i]||'')));
+ const body=rows.slice(hi+1);let kc=-1,best=0;for(let c=0;c<Math.max(...body.map(r=>r.length),0);c++){const n=body.filter(r=>/^TERL\s*\d+/i.test(txt(r[c]))).length;if(n>best){best=n;kc=c}}
+ const mc=col(/montant/i),lc=col(/libell/i),dp=col(/date\s*pr[ée]v/i),dr=col(/date\s*r[ée]el/i),fc=col(/facture/i);
+ const num=v=>typeof v==='number'?v:rpNum(v);
+ return body.map(r=>{const k=kc>=0?txt(r[kc]).replace(/\s+/g,'').toUpperCase():'',lib=lc>=0?txt(r[lc]):'',v=mc>=0?num(r[mc]):0;
+   if(!k&&!lib)return null;if(!v&&!lib)return null;const n=+((k.match(/\d+/)||[0])[0]);
+   return{k:k||('L'+(n||Math.random().toString(36).slice(2,6))),n,lib,v:ecR(v),de:dp>=0?xlDate(r[dp],d1904):'',df:dr>=0?xlDate(r[dr],d1904):'',fn:fc>=0?txt(r[fc]).replace(/\.0+$/,''):''}})
+  .filter(Boolean).filter(g=>g.v||g.lib)}
+/* rattachement (appelé par l'échéancier à chaque calcul) */
+function gphLink(a,L,lg,td){const items=a.gph.items,byK=new Map(L.map(x=>[x.k,x])),tk=new Set();items.forEach(g=>{g._x=null});
+ items.forEach(g=>{if(g.m&&g.m!=='H'&&byK.has(g.m)){g._x=byK.get(g.m);tk.add(g._x)}});
+ const free=g=>!g._x&&g.m!=='H',U=s=>String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+ const ym=g=>{const u=U(g.lib),m=u.match(/\b(JANVIER|FEVRIER|MARS|AVRIL|MAI|JUIN|JUILLET|AOUT|SEPTEMBRE|OCTOBRE|NOVEMBRE|DECEMBRE|JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\b\s*(\d{4})?/);
+  if(m){const y=m[2]||(g.de||g.df||'').slice(0,4);return y?`${y}-${p2(GPHMO[m[1]])}`:''}return(g.de||g.df||'').slice(0,7)};
+ /* loyers : d'abord le n° de loyer s'il est dans le libellé (« Loyer n°6 · … »), sinon le mois du libellé (ou de la date prév.),
+    comparé au mois de début de période ou au mois d'enregistrement prévu, selon ce qui colle le mieux à l'ensemble des termes */
+ const isLoy=g=>/\b(LOCATION|LOYER|RENTAL|HIRE)\b/.test(U(g.lib))&&!/ARMOIRE|COFFRET|BUNGALOW|TRANSPORT/.test(U(g.lib));
+ const GL=items.filter(g=>free(g)&&isLoy(g)).sort((x,y)=>(x.n||0)-(y.n||0)||(x.de||'').localeCompare(y.de||'')),LL=L.filter(x=>x.t==='L');
+ GL.forEach(g=>{const m=U(g.lib).match(/\b(?:LOYER|RENT)\s*N\s*[°O.]?\s*(\d+)/);if(m){const x=LL.find(y=>!tk.has(y)&&y.n===+m[1]);if(x){g._x=x;tk.add(x)}}});
+ const fS=x=>x.s.slice(0,7),fP=x=>x.mp,hits=f=>GL.filter(g=>!g._x&&LL.some(x=>f(x)===ym(g))).length,F=hits(fS)>=hits(fP)?[fS,fP]:[fP,fS];
+ F.forEach(f=>GL.forEach(g=>{if(g._x)return;const m=ym(g);if(!m)return;const x=LL.find(y=>!tk.has(y)&&f(y)===m);if(x){g._x=x;tk.add(x)}}));
+ /* connexes et autres prestations : par type et montant */
+ items.filter(free).forEach(g=>{const u=U(g.lib),near=c=>c.sort((p,q)=>Math.abs(EC.n(p.s||td)-EC.n(g.de||td))-Math.abs(EC.n(q.s||td)-EC.n(g.de||td)))[0];
+  const same=x=>!tk.has(x)&&Math.abs(x.v-g.v)<1;let x=null;
+  if(/RETOUR|REPLI|DEMOBILI|DECONNEXION/.test(u))x=near(L.filter(y=>y.t==='R'&&(same(y)||(/CONNEXES RETOUR/.test(u)&&!tk.has(y)))));
+  else if(/ALLER|MOBILI|INSTALL|DECHARGEMENT|MISE EN SERVICE/.test(u))x=near(L.filter(y=>y.t==='A'&&(same(y)||(/CONNEXES ALLER/.test(u)&&!tk.has(y)))));
+  if(!x&&!/ALLER|RETOUR|REPLI|MOBILI/.test(u))x=near(L.filter(y=>(y.t==='X'||y.t==='A'||y.t==='R')&&same(y)));
+  if(x){g._x=x;tk.add(x)}});
+ items.forEach(g=>{if(g._x)(g._x.gs=g._x.gs||[]).push(g)});
+ items.filter(g=>!g._x).forEach(g=>{const s=g.de||g.df||'';const st=lg['H:'+g.k]||{};L.push({t:'H',ht:isLoy(g)?'L':'X',gs:[g],k:'H:'+g.k,s,e:s,v:g.v,base:g.v,man:null,st,mp:(s||td).slice(0,7),mDef:(s||td).slice(0,7),l:null,c:null,_d:s||'0000'})})}
+/* repère GPIC sur une ligne de commande rattachée */
+function gphTag(x){if(!x.gs||!x.gs.length||x.t==='H')return'';const sv=ecR(x.gs.reduce((s,g)=>s+g.v,0)),fn=x.gs.map(g=>g.fn).filter(Boolean);
+ return`<br><span class="sub gpt">🧾 GPIC ${x.gs.map(g=>esc(g.k)).join(' + ')}${fn.length?` · facture ${esc(fn.join(', '))}`:''}${CAN()?` <button class="ecdtb" data-gpun="${esc(x.gs.map(g=>g.k).join('|'))}" title="Détacher : le terme GPIC repasse en historique">✕</button>`:''}</span>${Math.abs(sv-x.v)>.5?`<br><span class="pill a ec2" title="Montant du terme GPIC différent du montant de la commande">GPIC ${EC.e(sv)}</span>`:''}`}
+/* ligne d'historique GPIC (lecture seule, rattachable à la main) */
+function gphRow(a,x,ro){const g=x.gs[0],X=echL(a),cand=X.L.filter(y=>y.t!=='H'&&(!y.gs||!y.gs.length)&&(!x.s||!y.s||Math.abs(EC.n(y.s)-EC.n(x.s))<120));
+ return`<tr class="ech"><td><b>${esc(g.lib||'Terme GPIC')}</b><br><span class="sub">${esc(g.k)} · historique GPIC${g.fn?` · facture ${esc(g.fn)}`:''}</span></td>
+ <td>${x.en?`<b>${EC.mois(x.me)}</b><br><span class="sub">date prév. GPIC ${EC.f(g.de)}</span>`:`<span class="sub">prévu</span> ${g.de?EC.f(g.de):'—'}`}</td>
+ <td>${g.df?`Facturé le ${EC.f(g.df)}`:'<span class="pill a ec2">non facturé dans GPIC</span>'}${ro||!cand.length?'':`<br><select data-gpl2="${esc(g.k)}" aria-label="Rattacher le terme ${esc(g.k)} à une ligne de commande"><option value="">Rattacher à une ligne…</option>${cand.slice(0,40).map(y=>`<option value="${esc(y.k)}">${esc(ecDes(y))} · ${EC.e(y.v)}</option>`).join('')}</select>`}</td>
+ <td class="ecv fmv">${EC.e(x.v)}</td>
+ <td class="eccb"><label><input type="checkbox" ${x.en?'checked':''} disabled> Enregistré</label><br><label><input type="checkbox" ${x.f?'checked':''} disabled> Facturé</label></td><td></td></tr>`}
+/* bandeau, import, aperçu */
+let GPPREV=null,GPRM=null;
+function gphStats(a,items){const tmp={...a,gph:{...(a.gph||{}),items}},X=echL(tmp),H=X.L.filter(x=>x.t==='H'),lk=X.L.filter(x=>x.t!=='H'&&x.gs&&x.gs.length);
+ return{X,H:H.length,lk:items.length-H.length,lines:lk.length,tot:ecR(items.reduce((s,g)=>s+g.v,0)),nf:items.filter(g=>!g.df).length,d1:items.map(g=>g.de||g.df).filter(Boolean).sort()[0]||'',d2:items.map(g=>g.de||g.df).filter(Boolean).sort().pop()||''}}
+function gphBan(a){if(GPPREV&&GPPREV.a===a)return gphPrevH(a);if(!gphN(a))return'';const S=gphStats(a,a.gph.items),ro=!CAN();
+ return`<div class="rpban gphban"><span><b>🧾 Historique GPIC</b> : ${a.gph.items.length} termes, ${EC.e(S.tot)} (du ${EC.f(S.d1)} au ${EC.f(S.d2)}) · <b>${S.lk}</b> rattaché${S.lk>1?'s':''} à la commande, <b>${S.H}</b> en historique${S.nf?` · ${S.nf} non facturé${S.nf>1?'s':''} dans GPIC`:''}<br><span class="sub">Importé le ${frL(String(a.gph.at||'').slice(0,10))}${a.gph.by?' par '+esc(a.gph.by):''}${a.gph.file?' · '+esc(a.gph.file):''}</span></span>${ro?'':`<span>${GPRM===a?'<button class="btn sm p" data-gprm2="1">Confirmer le retrait</button> <button class="btn sm" data-gprmx="1">Garder</button>':'<button class="btn sm" data-gphf="1">Réimporter</button> <button class="btn sm" data-gprm="1">Retirer</button>'}</span>`}</div>`}
+function gphPrevH(a){const P=GPPREV,S=gphStats(a,P.items);
+ return`<div class="ecform rpw gphp"><h5>🧾 Importer l’historique GPIC · ${esc(P.file||'')}</h5>
+ <p class="sub" style="margin-top:0">${P.items.length} termes, ${EC.e(S.tot)}, du ${EC.f(S.d1)} au ${EC.f(S.d2)}. Date prév. = date d’enregistrement ; date réelle = date de facturation.
+ ${cdesOf(a).length?`<b>${S.lk}</b> terme${S.lk>1?'s':''} se rattache${S.lk>1?'nt':''} aux lignes de la commande saisie, <b>${S.H}</b> resteront en historique GPIC.`:'Aucune commande saisie : tous les termes seront en historique GPIC. Ceux qui tombent sur la période d’une commande que tu ajouteras ensuite s’y rattacheront.'}
+ ${gphN(a)?` <b>Remplace l’historique importé le ${frL(String(a.gph.at||'').slice(0,10))}</b> (les rattachements faits à la main sont gardés).`:''}</p>
+ <div class="tw"><table class="ectb"><thead><tr><th>Terme</th><th>Libellé</th><th>Montant</th><th>Date prév.</th><th>Date réelle</th><th>Facture</th><th>Dans RentPilot</th></tr></thead><tbody>${P.items.map(g=>{const x=S.X.L.find(y=>y.gs&&y.gs.includes(g));return`<tr><td>${esc(g.k)}</td><td>${esc(g.lib)}</td><td class="fmv">${EC.e(g.v)}</td><td>${EC.f(g.de)||'—'}</td><td>${EC.f(g.df)||'—'}</td><td>${esc(g.fn||'')}</td><td>${x&&x.t!=='H'?`<span class="pill ok ec2">rattaché</span> ${esc(ecDes(x))}`:'<span class="pill g ec2">historique</span>'}</td></tr>`}).join('')}</tbody></table></div>
+ <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button class="btn" data-gpx="1">Annuler</button><button class="btn p" data-gpok="1">Importer ${P.items.length} termes</button></div></div>`}
+{const h1=ecH;ecH=function(a){let h=h1.apply(this,arguments);if(REPED&&REPED.a===a&&!REPED.edit)return h;
+ if(CAN())h=h.replace('📥 Reprendre une commande existante</button>','📥 Reprendre une commande existante</button> <button class="btn" data-gphf="1" style="margin:6px 0" title="Extraction GPIC des termes (.xls, .xlsx, .csv) ou commande client (.pdf)">📂 Importer un fichier</button><span class="sub gphdz"> ou glisse ici l’extraction GPIC des termes (.xls) ou la commande client (.pdf)</span>');
+ return h.replace('<div id="ecbh">','<div id="ecbh">'+gphBan(a))}}
+/* lecture d'un fichier déposé ou choisi */
+async function gphFile(f){if(!cur||!CAN()||!f)return;const a=cur;try{
+ if(/\.pdf$/i.test(f.name)||f.type==='application/pdf'){const t=await rdPdfText(await f.arrayBuffer());if(!t.trim())return toast('Ce PDF ne contient pas de texte lisible (scan ?) : copie-colle le texte de la commande à la place.');
+  REPED={a,h:{},txt:t,R:null,enr:ecD(a.rep&&a.rep.enr)||ecD(a.finEnreg)||'',fac:ecD(a.rep&&a.rep.fac)||ecD(a.finFac)||'',file:f.name};ECED=null;GPPREV=null;
+  const R=rpParse(t);REPED.R=R;if(R.num)REPED.h.num=R.num;const L0=R.postes.find(p=>p.on&&p.ty==='L');if(L0){REPED.h.devis=L0.devis;REPED.h.rev=L0.rev}
+  rpRender();toast(R.postes.length?`Commande lue : ${R.postes.length} postes, ${R.postes.filter(p=>p.on).length} cochés. Vérifie les dates !`:'Aucun poste reconnu dans ce PDF.');return}
+ const R=await rdSheet(f),items=gphParse(R);if(!items.length)return toast('Aucun terme GPIC reconnu : il faut les colonnes « Libellé », « Montant », « Date prév. » et « Date réelle ».');
+ GPPREV={a,items,file:f.name};REPED=null;rpRender()}catch(e){console.error(e);toast('Fichier illisible : '+(e.message||e))}}
+$('#da').addEventListener('click',e=>{const t=e.target.closest('button');if(!t||!cur)return;const D_=t.dataset;
+ if(D_.gphf&&CAN()){const i=document.createElement('input');i.type='file';i.accept='.xls,.xlsx,.csv,.htm,.html,.pdf';i.onchange=()=>gphFile(i.files[0]);i.click()}
+ if(D_.gpx){GPPREV=null;rpRender()}
+ if(D_.gpok&&GPPREV&&CAN()){const a=GPPREV.a,old=new Map(((a.gph&&a.gph.items)||[]).map(g=>[g.k,g]));const items=GPPREV.items.map(g=>{const o=old.get(g.k);const n={k:g.k,n:g.n,lib:g.lib,v:g.v,de:g.de,df:g.df,fn:g.fn};if(o&&o.m)n.m=o.m;return n});
+  a.gph={at:new Date().toISOString(),by:ecWho(),file:GPPREV.file||'',items};const S=gphStats(a,items);a.com=a.com||[];a.com.push({d:new Date().toISOString(),t:`🧾 Historique GPIC importé (${GPPREV.file||'fichier'}) : ${items.length} termes, ${EC.e(S.tot)} · ${S.lk} rattachés à la commande, ${S.H} en historique`});
+  GPPREV=null;ecSync(a);save();render();refreshD();rpRender();toast(`Historique GPIC importé : ${items.length} termes.`)}
+ if(D_.gprm){GPRM=cur;rpRender()}if(D_.gprmx){GPRM=null;rpRender()}
+ if(D_.gprm2&&CAN()){const n=gphN(cur);delete cur.gph;GPRM=null;cur.com=cur.com||[];cur.com.push({d:new Date().toISOString(),t:`🧾 Historique GPIC retiré (${n} termes)`});save();render();refreshD();rpRender()}
+ if(D_.gpun&&CAN()&&gphN(cur)){D_.gpun.split('|').forEach(k=>{const g=cur.gph.items.find(x=>x.k===k);if(g)g.m='H'});save();render();refreshD();rpRender()}});
+$('#da').addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.gpl2||!cur||!CAN()||!gphN(cur)||!t.value)return;const g=cur.gph.items.find(x=>x.k===t.dataset.gpl2);if(g){g.m=t.value;save();render();refreshD();rpRender()}});
+/* glisser-déposer sur la fiche ouverte */
+document.addEventListener('dragover',e=>{if(!cur||!CAN()||$('#dr').hidden||!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;const z=e.target.closest&&e.target.closest('#ecb');if(!z)return;e.preventDefault();e.dataTransfer.dropEffect='copy';z.classList.add('gpdrop')});
+document.addEventListener('dragleave',e=>{const z=e.target.closest&&e.target.closest('#ecb');if(z&&!z.contains(e.relatedTarget))z.classList.remove('gpdrop')});
+document.addEventListener('drop',e=>{const z=e.target.closest&&e.target.closest('#ecb');if(!z||!cur||!e.dataTransfer||!e.dataTransfer.files.length)return;e.preventDefault();z.classList.remove('gpdrop');gphFile(e.dataTransfer.files[0])});
+/* repère pour contrôler les dates d'une commande reprise */
+function gphHint(a){if(!gphN(a))return'';const L=a.gph.items.filter(g=>/LOCATION|LOYER/i.test(g.lib)).sort((x,y)=>(x.n||0)-(y.n||0));if(!L.length)return'';const f=L[0],l=L[L.length-1];
+ return`<p class="note" style="margin:6px 0">🧾 Pour contrôler les dates : dans GPIC, le premier loyer est « ${esc(f.lib)} » (${EC.f(f.de)}) et le dernier « ${esc(l.lib)} » (${EC.f(l.de)}, ${EC.e(l.v)}). Les termes GPIC qui tombent sur la période de la commande s’y rattacheront.</p>`}
+{const r1=rpH;rpH=function(a){const h=r1.apply(this,arguments);return h.replace('<h5>📥 Reprendre une commande existante</h5>','<h5>📥 Reprendre une commande existante</h5>'+(REPED&&REPED.file?`<p class="note" style="margin:0 0 6px">📄 Texte lu dans <b>${esc(REPED.file)}</b> : contrôle les postes cochés et surtout les dates, celles de la commande client sont souvent fausses.</p>`:'')+gphHint(a))}}
 
 /* ===== Campagne de fin de mois : enregistrement du chiffre =====
    Ouverte le 1er du mois, date limite = dernier jour ouvré (week-ends et jours fériés français exclus).
