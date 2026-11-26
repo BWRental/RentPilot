@@ -1980,11 +1980,22 @@ function plDmgId(id){const as=PL.A.get(id);if(!as)return false;if(plDmgV(as.dmg)
 function plBackRows(id){const p=cur&&plProj(cur);if(!p)return[];const R=(PL.byP.get(p.id)||[]).filter(x=>x.asset_id===id);return R.length&&R.every(x=>x.workshop_return||x.transfer_to_next)?R:[]}
 const plBackId=id=>plBackRows(id).length>0;
 function plBackTxt(id){const x=plBackRows(id).slice(-1)[0];if(!x)return'';return x.workshop_return?`rentré ${x.returned_to&&!/atelier/i.test(x.returned_to)?'à '+x.returned_to:'à l’atelier'}${x.return_date?' le '+plDs(x.return_date):''}`:'transféré vers le projet suivant'}
-function plSweep(d){const P=plPla(d),gone=[];Object.keys(P).forEach(id=>{const v=P[id];if(!v)return;
-  if(v.k!=='r'&&v.k&&plBackId(id)){P[id]={k:'r',was:v.k,n:v.n,t:v.t,lieu:v.lieu,at:new Date().toISOString()};gone.push(`${v.n||id} (${plBackTxt(id)})`);return}
-  if(v.k==='r'&&!plBackId(id)){if(v.was&&v.was!=='d')P[id]={k:v.was,n:v.n,t:v.t,lieu:v.lieu};else delete P[id];return}
+function plSweep(d){const P=plPla(d),gone=[];let ch=0;Object.keys(P).forEach(id=>{const v=P[id];if(!v)return;
+  if(v.k!=='r'&&v.k&&plBackId(id)){P[id]={k:'r',was:v.k,n:v.n,t:v.t,lieu:v.lieu,at:new Date().toISOString()};plQty(d,P[id],1);ch=1;gone.push(`${v.n||id} (${plBackTxt(id)})`);return}
+  if(v.k==='r'&&!plBackId(id)){plQty(d,v,-1);ch=1;if(v.was&&v.was!=='d')P[id]={k:v.was,n:v.n,t:v.t,lieu:v.lieu};else delete P[id];return}
+  if(v.k==='r'&&!v.qa){plQty(d,v,1);ch=1}
   if((v.k||'').match(/^[ln]:|^x$/)&&plDmgId(id)){P[id]={k:'d',was:v.k,n:v.n,t:v.t,lieu:v.lieu}}});
+if(ch&&!gone.length&&cur&&CAN())setTimeout(save,0);
  if(gone.length&&cur){d.reed={d:new Date().toISOString(),t:[...new Set([...((d.reed&&!plReedDone(d))?d.reed.t:[]),...gone])]};cur.com=cur.com||[];cur.com.push({d:new Date().toISOString(),t:`🔧 Retiré de l’implantation et de la nomenclature (RentPlanner) : ${gone.join(', ')} · nomenclature à rééditer`});setTimeout(save,0)}}
+/* quantité de l'élément dessiné : un flexible rentré décompte 1 (s=1) ; renvoyé sur site, on remet (s=-1).
+   Flexible dessiné seul (quantité 1) : il est retiré du schéma d'implantation (gardé de côté pour le remettre s'il revient) ;
+   raccord dessiné : mis hors nomenclature (off). */
+function plQty(d,v,s){const k=v.was||'',g=d.g||{},P=plPla(d);let o=null,isL=false;if(k.startsWith('l:')){o=(g.L||[]).find(l=>l.id===k.slice(2));isL=true}else if(k.startsWith('n:'))o=(g.n||{})[k.slice(2)];
+ if(s>0){v.qa=1;if(!o)return;if(isL){const q=parseInt(o.q)||1,oth=Object.values(P).some(x=>x&&x!==v&&x.k===k);if(q>1){o.q=q-1;v.dq=1}else if(!oth){v.lk=JSON.parse(JSON.stringify(o));g.L=g.L.filter(l=>l!==o)}}else{o.off=1;v.off=1}return}
+ if(!v.qa)return;if(isL){if(v.lk){if(!o&&g.n[v.lk.a.n]&&g.n[v.lk.b.n])g.L.push(v.lk)}else if(o&&v.dq)o.q=(parseInt(o.q)||1)+1}else if(o&&v.off)delete o.off}
+{const lg0=linesG;linesG=function(a){const d=iniG(a);if(typeof plSweep==='function')plSweep(d);const bk=[],g=d.g||{};
+ try{Object.values(g.n||{}).forEach(n=>{if(n.off&&n.k==='fit'){bk.push([n,'fit',1]);n.k='fit_off'}});return lg0.apply(this,arguments)}
+ finally{bk.forEach(([o,v,isN])=>{if(isN)o.k=v;else{if(v===undefined)delete o.kind;else o.kind=v}})}};if(lines===lg0)lines=linesG}
 const plReedDone=d=>!d.reed||(d.gen||[]).some(g=>String(g.d||'')>d.reed.d);
 function plEqDmg(e){return!!(e&&e.pl&&plDmgId(e.pl))}
 function plRefs(d,k){const P=plPla(d);plSweep(d);return Object.keys(P).filter(id=>P[id]&&P[id].k===k&&!plDmgId(id)).map(id=>{const as=PL.A.get(id);return as?as.name:P[id].n}).filter(Boolean)}
@@ -2390,7 +2401,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='26/11/2026 11h00';
+const RP_VER='26/11/2026 12h00';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
