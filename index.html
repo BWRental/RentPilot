@@ -2446,7 +2446,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='27/11/2026 12h45';
+const RP_VER='27/11/2026 13h00';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -3390,8 +3390,12 @@ $('#da').addEventListener('click',e=>{const b=e.target.closest('[data-aurs]');if
  save();toast(`Documents de ${a.loc||'la location'} restaurés (version ${b.dataset.v==='old'?'d’avant':'d’après'} ${w}).`);try{if(cur!==a){if(!$('#dr').hidden)closeD();openD(a.id)}else refreshD()}catch(err){console.error(err)}},true);
 
 /* --- deux fiches avec le même n° de loc : on le signale dans la fiche (sinon on peut travailler sur l'une et rouvrir l'autre) --- */
-{const o=openD;openD=function(){const r=o.apply(this,arguments);try{const a=cur;if(a&&a.loc){const D=rows.filter(x=>x!==a&&x.loc&&String(x.loc).trim().toUpperCase()===String(a.loc).trim().toUpperCase());
+{const o=openD;openD=function(){const r=o.apply(this,arguments);try{const a=cur;if(a&&a.loc){const nl=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,''),D=rows.filter(x=>x!==a&&x.loc&&nl(x.loc)===nl(a.loc));
  if(D.length){const fh=$('#da .fh');if(fh&&!$('#dupw')){const w=document.createElement('div');w.id='dupw';w.className='rpban';w.style.margin='8px 0';w.innerHTML=`<span>⚠ <b>${D.length+1} fiches portent le n° ${esc(a.loc)}</b> : tu travailles peut-être sur la mauvaise. ${D.map(x=>`<button class="btn sm" data-gzo="${esc(x.id)}">Ouvrir l’autre (${esc(x.client||'')}${x._upd?' · '+esc(String(x._upd).slice(0,10)):''})</button>`).join(' ')}</span>`;fh.after(w)}}}}catch(e){console.error(e)}return r}}
+
+/* historique : quand plusieurs fiches ont le même n° de loc, on indique de quelle fiche il s'agit */
+{const a1=aud1;aud1=function(x){let h=a1.apply(this,arguments);try{const a=rows.find(r=>r.sid===x.affaire_id);if(a&&a.loc){const nl=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');const D=rows.filter(r=>r.loc&&nl(r.loc)===nl(a.loc));
+ if(D.length>1)h=h.replace('<div class="au">',`<div class="au"><span class="pill" style="--c:var(--wa)" title="Plusieurs fiches portent ce n° de loc">fiche ${D.indexOf(a)+1}/${D.length} · ${esc(String(a.sid||'').slice(0,6))}</span> `)}}catch(e){}return h}}
 
 try{
 /* ===== Thème de Noël RentPilot =====
