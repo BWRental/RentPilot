@@ -2446,7 +2446,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='27/11/2026 12h30';
+const RP_VER='27/11/2026 12h45';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -3380,11 +3380,18 @@ async function syncGuard(a,s,p,d){let r;try{r=await sbf(`/rest/v1/affaires?id=eq
  else if(Object.keys(p).some(k=>sgObj(p[k])&&s.d[k]!==sgJ(sv[k])))try{if(cur===a&&!(typeof ED!=='undefined'&&ED&&ED.a===a))refreshD()}catch(e){}}
 /* --- restaurer une version des documents / implantation depuis l'historique de la fiche --- */
 {const a0=aud1;aud1=function(x){let h=a0.apply(this,arguments);try{if(CAN()&&x.action==='update'&&x.changes&&x.changes.docs)h=h.replace(/<\/div>\s*$/,`<div class="aurs"><button class="btn sm" data-aurs="${x.id}" data-v="old" title="Remet les documents (implantation, nomenclature, adresse…) tels qu’ils étaient juste avant cette modification">↩ Revenir à avant cette modif</button> <button class="btn sm" data-aurs="${x.id}" data-v="new" title="Remet les documents tels qu’ils étaient juste après cette modification">↩ Revenir à juste après</button></div></div>`)}catch(e){}return h}}
-$('#da').addEventListener('click',e=>{const b=e.target.closest('[data-aurs]');if(!b||!cur||!CAN())return;const x=(AUD||[]).find(y=>String(y.id)===b.dataset.aurs);if(!x||!x.changes||!x.changes.docs)return;
- if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='Confirmer : remplacer les documents actuels';b.classList.add('p');return}
- const v=x.changes.docs[b.dataset.v];if(!v||typeof v!=='object')return toast('Cette version est vide.');sgKeep(cur,'docs',cur.docs);cur.docs=JSON.parse(JSON.stringify(v));
- const w=new Date(x.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});cur.com=cur.com||[];cur.com.push({d:new Date().toISOString(),t:`↩ Documents / implantation restaurés à la version ${b.dataset.v==='old'?'d’avant':'d’après'} la modification du ${w} (${x.user_name||'?'})`});
- save();refreshD();toast('Documents restaurés. La version remplacée est gardée de côté sur ce poste.')});
+$('#da').addEventListener('click',e=>{const b=e.target.closest('[data-aurs]');if(!b||!CAN())return;e.preventDefault();e.stopPropagation();
+ const id=b.dataset.aurs,x=[...(typeof AUD!=='undefined'&&AUD||[]),...(typeof HX!=='undefined'&&HX&&HX.rows||[])].find(y=>String(y.id)===id);if(!x||!x.changes||!x.changes.docs)return toast('Version introuvable : actualise l’historique.');
+ const a=rows.find(r=>r.sid===x.affaire_id);if(!a)return toast('Location introuvable (supprimée ?).');
+ if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent=`Confirmer : remplacer les documents de ${a.loc||'cette location'}`;b.classList.add('p');return}
+ const v=x.changes.docs[b.dataset.v];if(!v||typeof v!=='object')return toast('Cette version est vide.');sgKeep(a,'docs',a.docs);
+ a.docs=JSON.parse(JSON.stringify(v));if(typeof ED!=='undefined'&&ED&&ED.a===a)ED=null;
+ const w=new Date(x.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});a.com=a.com||[];a.com.push({d:new Date().toISOString(),t:`↩ Documents / implantation restaurés à la version ${b.dataset.v==='old'?'d’avant':'d’après'} la modification du ${w} (${x.user_name||'?'})`});
+ save();toast(`Documents de ${a.loc||'la location'} restaurés (version ${b.dataset.v==='old'?'d’avant':'d’après'} ${w}).`);try{if(cur!==a){if(!$('#dr').hidden)closeD();openD(a.id)}else refreshD()}catch(err){console.error(err)}},true);
+
+/* --- deux fiches avec le même n° de loc : on le signale dans la fiche (sinon on peut travailler sur l'une et rouvrir l'autre) --- */
+{const o=openD;openD=function(){const r=o.apply(this,arguments);try{const a=cur;if(a&&a.loc){const D=rows.filter(x=>x!==a&&x.loc&&String(x.loc).trim().toUpperCase()===String(a.loc).trim().toUpperCase());
+ if(D.length){const fh=$('#da .fh');if(fh&&!$('#dupw')){const w=document.createElement('div');w.id='dupw';w.className='rpban';w.style.margin='8px 0';w.innerHTML=`<span>⚠ <b>${D.length+1} fiches portent le n° ${esc(a.loc)}</b> : tu travailles peut-être sur la mauvaise. ${D.map(x=>`<button class="btn sm" data-gzo="${esc(x.id)}">Ouvrir l’autre (${esc(x.client||'')}${x._upd?' · '+esc(String(x._upd).slice(0,10)):''})</button>`).join(' ')}</span>`;fh.after(w)}}}}catch(e){console.error(e)}return r}}
 
 try{
 /* ===== Thème de Noël RentPilot =====
