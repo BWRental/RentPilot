@@ -1120,7 +1120,7 @@ async function syncNow(){syncT=null;if(!window.CLOUD)return;if(syncing){again=tr
   for(const a of rows.slice()){
    if(!a.sid){const r=await sbf('/rest/v1/affaires',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({data:dataOf(a)})});a.sid=r[0].id;const s0=mkSH();for(const[k,v]of Object.entries(dataOf(a)))s0.d[k]=jj(v);SH.set(a.sid,s0)}
    else{let s=SH.get(a.sid);if(!s){s=mkSH();SH.set(a.sid,s)}const d=dataOf(a),p={};for(const k in d)if(s.d[k]!==jj(d[k]))p[k]=d[k];for(const k in s.d)if(!(k in d))p[k]=null;
-    if(Object.keys(p).length){await sbf('/rest/v1/rpc/patch_affaire',{method:'POST',body:JSON.stringify({p_id:a.sid,p_patch:p})});for(const k in p){if(k in d)s.d[k]=jj(d[k]);else delete s.d[k]}}}
+    if(Object.keys(p).length)await syncGuard(a,s,p,d);if(Object.keys(p).length){await sbf('/rest/v1/rpc/patch_affaire',{method:'POST',body:JSON.stringify({p_id:a.sid,p_patch:p})});for(const k in p){if(k in d)s.d[k]=jj(d[k]);else delete s.d[k]}}}
    const s=SH.get(a.sid);
    for(const c of a.com)if(!c.uid){const r=await sbf('/rest/v1/commentaires',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({affaire_id:a.sid,body:c.t,imported:!!c.imp,...(c.imp?{created_at:c.d||undefined,author_name:c.by||'Import'}:{})})});c.uid=r[0].id;c.by=r[0].author_name;c.byId=r[0].author_id;if(!c.imp)c.d=r[0].created_at;s.com.add(c.uid)}
    for(const u of [...s.com])if(!a.com.some(c=>c.uid===u)){await sbf(`/rest/v1/commentaires?id=eq.${u}`,{method:'DELETE'});s.com.delete(u)}
@@ -2067,6 +2067,11 @@ async function plFixContact(){if(!window.CLOUD||!PL.on||typeof CAN!=='function'|
  (au||[]).forEach(x=>{const c=x.changes&&x.changes.contact;if(!c||done.has(x.affaire_id))return;const a=rows.find(r=>r.sid===x.affaire_id);if(!a)return;const v=plArea(plProj(a));
   if(v&&String(c.new||'').trim()===v&&String(a.contact||'').trim()===v&&String(c.old||'')!==v){a.contact=c.old||'';done.add(x.affaire_id);n++}});
  if(n){save();toast(`Contact région remis comme avant sur ${n} location${n>1?'s':''}.`)}try{localStorage.setItem('rp-fixct-2611','1')}catch(e){}}
+/* --- interfaces client : une nouvelle interface (ou une interface posée sur une autre) va sur un emplacement libre, au lieu de se cacher sous une autre --- */
+{const en0=ensureNodes;ensureNodes=function(a,d){const r=en0.apply(this,arguments);try{const N=d.g.n,C=d.cli.filter(cliOn).map(c=>c.id).filter(id=>N[id]&&N[id].k==='cli');
+ const hit=(n,o)=>n.pg===o.pg&&Math.abs(n.x-o.x)<CLW*.6&&Math.abs(n.y-o.y)<CLH*.9,slot=k=>{const col=Math.floor(k/7);return{x:col?.3:11.45,y:1.15+(k%7)*.86,rot:col?180:0}};
+ C.forEach((id,i)=>{const n=N[id];if(!C.slice(0,i).some(j=>hit(n,N[j])))return;
+  for(let k=0;k<28;k++){const s=slot(k),t={...n,...s};if(!Object.keys(N).some(j=>j!==id&&(N[j].k==='cli'?hit(t,N[j]):false))){Object.assign(n,s);break}}})}catch(e){console.error(e)}return r}}
 
 /* ===== Glisser un mail Outlook sur une location : il s'inscrit dans « Commentaires et historique » ===== */
 /* Lecture d'un fichier .msg (format Outlook « Compound File ») : objet, expéditeur, date, début du texte */
@@ -2441,7 +2446,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='26/11/2026 16h00';
+const RP_VER='27/11/2026 12h30';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -3351,6 +3356,35 @@ $('#da').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)r
  if(t.dataset.bxpi&&CAN()){const i=document.createElement('input');i.type='file';i.accept='.xlsx,.xls,.csv';i.onchange=()=>bxPImport(i.files[0]);i.click()}
  if(t.dataset.bxn||t.dataset.bxc||t.dataset.bxo)setTimeout(()=>{if(!BXP&&!BXPL)bxPLoad()},0)});
 {const m0=bxMount;bxMount=function(){m0.apply(this,arguments);if(!BXP&&!BXPL&&cur)bxPLoad()}}
+
+/* ===== Garde-fou d'enregistrement cloud (27/11/2026)
+   Avant d'envoyer une modification, on relit la version du serveur. Si un collègue (ou un autre onglet) a modifié la même rubrique entre-temps,
+   on fusionne au niveau des sous-rubriques (ex. adresse vs implantation dans « docs ») au lieu d'écraser son travail avec une copie périmée.
+   Vrai conflit sur la même sous-rubrique : la version du serveur est gardée, la nôtre est mise de côté (récupérable). */
+const sgJ=v=>v===undefined?undefined:jj(v),sgObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
+/* remplacement sur place : l'éditeur d'implantation garde la même référence d'objet */
+function sgSet(a,k,v){if(v===undefined){delete a[k];return}if(sgObj(a[k])&&sgObj(v)){const o=a[k];for(const j of Object.keys(o))if(!(j in v))delete o[j];Object.assign(o,v)}else a[k]=v}
+function sgKeep(a,k,v){try{const L=JSON.parse(localStorage.getItem('rp-conflits')||'[]');L.unshift({at:new Date().toISOString(),loc:a.loc||'',sid:a.sid,k,v});localStorage.setItem('rp-conflits',JSON.stringify(L.slice(0,8)))}catch(e){}}
+async function syncGuard(a,s,p,d){let r;try{r=await sbf(`/rest/v1/affaires?id=eq.${a.sid}&select=data`)}catch(e){return}if(!r||!r[0])return;const sv=r[0].data||{},lost=[];
+ for(const k of Object.keys(p)){const th=sgJ(sv[k]),base=s.d[k],mine=p[k]===null?undefined:sgJ(p[k]);
+  if(th===base)continue;                                   /* personne d'autre n'a touché : on envoie */
+  if(th===mine){delete p[k];if(th===undefined)delete s.d[k];else s.d[k]=th;continue}  /* déjà identique */
+  /* le serveur a changé depuis notre dernière lecture */
+  if(sgObj(p[k])&&sgObj(sv[k])&&base!==undefined){const B=JSON.parse(base),M=p[k],T=sv[k],out={...T};let cf=[];
+   for(const j of new Set([...Object.keys(B||{}),...Object.keys(M),...Object.keys(T)])){const bj=sgJ((B||{})[j]),mj=sgJ(M[j]),tj=sgJ(T[j]);
+    if(mj===bj)continue;if(tj===bj||tj===mj){if(M[j]===undefined)delete out[j];else out[j]=M[j]}else cf.push(j)}
+   if(cf.length){lost.push(`${LBL&&LBL[k]||k} (${cf.join(', ')})`)}
+   const keep=cf.length?JSON.parse(JSON.stringify(M)):null;sgSet(a,k,out);p[k]=a[k];if(keep)sgKeep(a,k,keep);if(sgJ(a[k])===th){delete p[k];s.d[k]=th}continue}
+  sgKeep(a,k,JSON.parse(JSON.stringify(p[k]===undefined?null:p[k])));lost.push(LBL&&LBL[k]||k);const keep=JSON.parse(JSON.stringify(p[k]===undefined?null:p[k]));sgSet(a,k,sv[k]===undefined?undefined:JSON.parse(JSON.stringify(sv[k])));delete p[k];void keep;if(th===undefined)delete s.d[k];else s.d[k]=th}
+ if(lost.length){toast(`⚠ ${a.loc||'Cette fiche'} avait été modifiée par un collègue (ou dans un autre onglet) : sa version est gardée pour ${lost.join(', ')}. Ta version est mise de côté.`);try{if(cur===a)refreshD()}catch(e){}}
+ else if(Object.keys(p).some(k=>sgObj(p[k])&&s.d[k]!==sgJ(sv[k])))try{if(cur===a&&!(typeof ED!=='undefined'&&ED&&ED.a===a))refreshD()}catch(e){}}
+/* --- restaurer une version des documents / implantation depuis l'historique de la fiche --- */
+{const a0=aud1;aud1=function(x){let h=a0.apply(this,arguments);try{if(CAN()&&x.action==='update'&&x.changes&&x.changes.docs)h=h.replace(/<\/div>\s*$/,`<div class="aurs"><button class="btn sm" data-aurs="${x.id}" data-v="old" title="Remet les documents (implantation, nomenclature, adresse…) tels qu’ils étaient juste avant cette modification">↩ Revenir à avant cette modif</button> <button class="btn sm" data-aurs="${x.id}" data-v="new" title="Remet les documents tels qu’ils étaient juste après cette modification">↩ Revenir à juste après</button></div></div>`)}catch(e){}return h}}
+$('#da').addEventListener('click',e=>{const b=e.target.closest('[data-aurs]');if(!b||!cur||!CAN())return;const x=(AUD||[]).find(y=>String(y.id)===b.dataset.aurs);if(!x||!x.changes||!x.changes.docs)return;
+ if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='Confirmer : remplacer les documents actuels';b.classList.add('p');return}
+ const v=x.changes.docs[b.dataset.v];if(!v||typeof v!=='object')return toast('Cette version est vide.');sgKeep(cur,'docs',cur.docs);cur.docs=JSON.parse(JSON.stringify(v));
+ const w=new Date(x.at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});cur.com=cur.com||[];cur.com.push({d:new Date().toISOString(),t:`↩ Documents / implantation restaurés à la version ${b.dataset.v==='old'?'d’avant':'d’après'} la modification du ${w} (${x.user_name||'?'})`});
+ save();refreshD();toast('Documents restaurés. La version remplacée est gardée de côté sur ce poste.')});
 
 try{
 /* ===== Thème de Noël RentPilot =====
