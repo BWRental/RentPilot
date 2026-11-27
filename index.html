@@ -1325,7 +1325,7 @@ function geo(d,l){const A=ptOf(d,l.a),B=ptOf(d,l.b);if(!A||!B)return null;const 
  const cl=(v,m)=>Math.max(.12,Math.min(m,v)),g={A,B,a,b,ra,rb,c1:{x:cl(a.x+A.nx*k+cx,13.2),y:cl(a.y+A.ny*k+cy,7.38)},c2:{x:cl(b.x+B.nx*k+cx,13.2),y:cl(b.y+B.ny*k+cy,7.38)}};
  if(l.kind&&l.kind!=='flex'){const s1={x:a.x+A.nx*.3,y:a.y+A.ny*.3},s2={x:b.x+B.nx*.3,y:b.y+B.ny*.3},cr=Math.abs(A.nx)>0?{x:s2.x+cx,y:s1.y+cy}:{x:s1.x+cx,y:s2.y+cy};g.poly=[a,s1,cr,s2,b];g.mid=cr}else g.mid=bz(g,.5);return g}
 const lnkT=l=>l.kind&&l.kind!=='flex'?`Tuyauterie rigide ${flab(l.f)} ${sz(l.dn,l.pn)}${l.kind==='rigC'?' (à charge client)':''}`.replace(/\s+/g,' ').trim():`${parseInt(l.q)||1} ${plu(l.nat||'flexible',parseInt(l.q)||1)} ${flab(l.f)} ${sz(l.dn,l.pn)}`.replace(/\s+/g,' ').trim();
-const fitDes=(d,id)=>{const n=d.g.n[id],A=fitPD(d,id,'A'),F=fitDef(n);if(n.des)return n.des;if(n.t==='libre')return`${n.nm||'Accessoire'} ${sz(A.dn,A.pn)}`.replace(/\s+/g,' ').trim();
+const fitDes=(d,id)=>{const n=d.g.n[id],A=fitPD(d,id,'A'),F=fitDef(n);if(n.des)return n.des;if(n.t==='soupape'&&typeof svDes==='function'){const z=svDes(d,id,n,A);if(z)return z}if(n.t==='libre')return`${n.nm||'Accessoire'} ${sz(A.dn,A.pn)}`.replace(/\s+/g,' ').trim();
  let t=`${F.d||F.n} ${flab(A.f)} ${sz(A.dn,A.pn)}`;if(TWO.has(n.t)){const B=fitPD(d,id,'B');if(n.t==='reduc'||B.dn!==A.dn||B.pn!==A.pn)t+=` / ${sz(B.dn,B.pn)}`}return t.replace(/\s+/g,' ').trim()};
 /* étiquette d'une réduction automatique (position : à côté de la réduction, côté extérieur) */
 function redLab(X,r,o,tag){const ux=X.nx,uy=X.ny,c={x:X.x+ux*RL/2,y:X.y+uy*RL/2},t=bal(r.t,26);o=o||{};
@@ -1639,7 +1639,7 @@ function edPanel(){if(!ED)return;const d=ED.d,S=ED.sel,c=CAN(),ro=c?'':'disabled
   else if(n.t==='libre'){const ac=accOf(n);h=`<h4>${esc(n.nm||'Accessoire libre')}</h4><p class="sub">${esc(fitDes(d,S.id))}</p>${cli}<div class="fm"><label class="w">Nom<input data-ep="nm" value="${esc(n.nm||'')}" ${ro}></label>${Se('f','Fluide',FLN(),n.f||'','Auto')}${I('dn','DN',n.dn,'placeholder="auto"')}${I('pn','PN',n.pn,'placeholder="auto"')}${Se('pp','Raccordements',PPS,n.pp||'2')}${I('w','Largeur (po)',n.w)}${I('h','Hauteur (po)',n.h)}${dsg}${I('ref','Réf.',n.ref)}${`<label>Lieu d’enlèvement${lieuIn('data-ep="lieu"',n.lieu||'',ro)}</label>`}${pgs}${lbl}</div>
    ${c?`<div id="mk-drop" class="mkd" role="button" tabindex="0"><b>${ac&&ac.img?'Remplacer le symbole':'Ajouter un symbole'}</b> : glisse une image ici, Ctrl+V ou clique<input type="file" id="mk-file" accept="image/*" hidden></div>`:''}
    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${B('rotl','↺ Tourner')}${B('rotr','↻ Tourner')}${det}${B('accsave',ac?'Mettre à jour Mes accessoires':'Enregistrer dans Mes accessoires')}${del}</div>`}
-  else{const tw=TWO.has(n.t);h=`<h4>${esc(fitDef(n).n)}</h4><p class="sub">${esc(fitDes(d,S.id))}</p>${cli}<div class="fm">${Se('t','Type',Object.entries(FIT).map(([k,f])=>[k,f.n]),n.t)}${Se('f','Fluide (sinon celui du flexible)',FLN(),n.f||'','Auto')}${I('dn',tw?'DN côté A (entrée)':'DN (sinon automatique)',n.dn,'placeholder="auto"')}${I('pn',tw?'PN côté A':'PN',n.pn,'placeholder="auto"')}${tw?I('dn2','DN côté B (sortie)',n.dn2,'placeholder="auto"')+I('pn2','PN côté B',n.pn2,'placeholder="auto"'):''}${dsg}${I('ref','Réf.',n.ref)}${`<label>Lieu d’enlèvement${lieuIn('data-ep="lieu"',n.lieu||'',ro)}</label>`}${pgs}${lbl}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${B('rotl','↺ Tourner')}${B('rotr','↻ Tourner')}${det}${del}</div>`}}
+  else{const tw=TWO.has(n.t);h=`<h4>${esc(fitDef(n).n)}</h4><p class="sub">${esc(fitDes(d,S.id))}</p>${cli}<div class="fm">${Se('t','Type',Object.entries(FIT).map(([k,f])=>[k,f.n]),n.t)}${Se('f','Fluide (sinon celui du flexible)',FLN(),n.f||'','Auto')}${I('dn',tw?'DN côté A (entrée)':n.t==='soupape'?'DN entrée (côté té)':'DN (sinon automatique)',n.dn,n.t==='soupape'?'placeholder="ex. DN32 ou DN32/50"':'placeholder="auto"')}${I('pn',tw?'PN côté A':'PN',n.pn,'placeholder="auto"')}${tw?I('dn2','DN côté B (sortie)',n.dn2,'placeholder="auto"')+I('pn2','PN côté B',n.pn2,'placeholder="auto"'):n.t==='soupape'?I('dn2','DN évent (sortie)',n.dn2,'placeholder="ex. DN50"'):''}${dsg}${I('ref','Réf.',n.ref)}${`<label>Lieu d’enlèvement${lieuIn('data-ep="lieu"',n.lieu||'',ro)}</label>`}${pgs}${lbl}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${B('rotl','↺ Tourner')}${B('rotr','↻ Tourner')}${det}${del}</div>`}}
  $('#iep').innerHTML=h}
 /* --- branchement sur l'application --- */
 lines=linesG;genImp=genImpG;docRender=docRenderG;docPrev=docPrevG;
@@ -2072,6 +2072,19 @@ async function plFixContact(){if(!window.CLOUD||!PL.on||typeof CAN!=='function'|
  const hit=(n,o)=>n.pg===o.pg&&Math.abs(n.x-o.x)<CLW*.6&&Math.abs(n.y-o.y)<CLH*.9,slot=k=>{const col=Math.floor(k/7);return{x:col?.3:11.45,y:1.15+(k%7)*.86,rot:col?180:0}};
  C.forEach((id,i)=>{const n=N[id];if(!C.slice(0,i).some(j=>hit(n,N[j])))return;
   for(let k=0;k<28;k++){const s=slot(k),t={...n,...s};if(!Object.keys(N).some(j=>j!==id&&(N[j].k==='cli'?hit(t,N[j]):false))){Object.assign(n,s);break}}})}catch(e){console.error(e)}return r}}
+/* --- soupape : entrée (côté té) et évent (sortie). Ex. DN32/50 : DN32 à l'entrée, évent DN50 ; ou « DN évent » saisi à part --- */
+function svEv(n){if(!n||n.t!=='soupape')return'';const v=String(n.dn2||'').trim();if(v)return/^\d+$/.test(v)?'DN'+v:v;const m=String(n.dn||'').match(/DN\s*\d+\s*\/\s*(?:DN\s*)?(\d+)/i);return m?'DN'+m[1]:''}
+function svDes(d,id,n,A){const ev=svEv(n);if(!ev)return'';const di=dnN(A&&A.dn);return`Soupape ${flab(n.f||(A&&A.f)||'Vapeur')}${di?' DN'+di+'/'+dnN(ev):' évent '+ev}`.replace(/\s+/g,' ').trim()}
+/* nomenclature : une ligne « Évent … DNxx » par taille d'évent (et lieu) */
+{const lg1=linesG;linesG=function(a){const L=lg1.apply(this,arguments);try{const d=iniG(a),G=new Map();for(const id in d.g.n){const n=d.g.n[id];if(n.k!=='fit'||n.t!=='soupape')continue;const ev=svEv(n);if(!ev)continue;
+  const A=fitPD(d,id,'A'),t=cap(`Évent ${flab(n.f||A.f||'Vapeur')} ${ev}`.replace(/\s+/g,' ').trim()),lieu=n.evl||n.lieu||DEFLIEU,k=norm(t)+'|'+lieu;
+  if(G.has(k))G.get(k).q++;else{const o={get lieu(){return n.evl||n.lieu||DEFLIEU},set lieu(v){n.evl=v}};const l={o,q:1,t,ref:'',lieu,key:'h:'+norm(t)};G.set(k,l);L.push(l)}}}catch(e){console.error(e)}return L};if(lines===lg1)lines=linesG}
+/* implantation : tuyau d'évent qui part du haut de la soupape, avec son DN */
+{const bp0=buildPage;buildPage=function(a,d,pg,E){const R=bp0.apply(this,arguments);try{const N=d.g.n;for(const id in N){const n=N[id];if(n.k!=='fit'||n.t!=='soupape'||n.pg!==pg)continue;const ev=svEv(n);if(!ev)continue;
+  /* petit tuyau noir en forme de corne : tige verticale, coude à 90°, pavillon évasé */
+  const pt=(x,y)=>{const[u,v]=rotP(x,y,n.rot);return[n.x+u,n.y+v]},cx=.12,cy=-.5,arc=(r,a0,a1,k)=>Array.from({length:k+1},(_,i)=>{const t=a0+(a1-a0)*i/k;return[cx+r*Math.cos(t),cy+r*Math.sin(t)]});
+  const shp=[[-.035,-.26],[-.035,-.5],...arc(.155,Math.PI,1.5*Math.PI,8).slice(1),[.21,-.7],[.21,-.54],...arc(.085,1.5*Math.PI,Math.PI,8),[.035,-.26]];
+  R.unshift({k:'poly',pts:shp.map(([x,y])=>pt(x,y)),fill:'000000'});const[tx,ty]=pt(.2,-.84);R.push({k:'text',x:tx-.6,y:ty-.11,w:1.2,h:.22,t:'Évent '+ev,fs:8,c:'14212E',al:'c',va:'m'})}}catch(e){console.error(e)}return R}}
 
 /* ===== Glisser un mail Outlook sur une location : il s'inscrit dans « Commentaires et historique » ===== */
 /* Lecture d'un fichier .msg (format Outlook « Compound File ») : objet, expéditeur, date, début du texte */
@@ -2446,7 +2459,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='27/11/2026 13h45';
+const RP_VER='27/11/2026 15h00';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
