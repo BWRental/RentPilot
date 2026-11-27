@@ -912,7 +912,7 @@ async function genNom(a){const d=ini(a),L=nomLines(a);if(L.length>32){toast('Tro
   if(typeof v==='number'){const e=doc.createElementNS(MX,'v');e.textContent=v;c.appendChild(e)}else{c.setAttribute('t','inlineStr');const i=doc.createElementNS(MX,'is'),t=doc.createElementNS(MX,'t');t.textContent=String(v);i.appendChild(t);c.appendChild(i)}};
  const dt=a.livDate?frL(a.livDate)+(a.livHeure?' à '+a.livHeure.replace(':00','h'):''):'';
  set('E4',d.payeur||a.client);set('I4',d.livre||a.client);set('E6',a.loc);set('I6',d.adresse);
- L.forEach((l,i)=>{const r=9+i;set('C'+r,l.q);set('D'+r,l.t);set('H'+r,l.ref);set('I'+r,l.lieu);set('J'+r,dt)});
+ L.forEach((l,i)=>{const r=9+i;set('C'+r,l.q);set('D'+r,l.t);set('H'+r,l.ref);set('I'+r,l.lieu);set('J'+r,dt)});[...doc.getElementsByTagName('row')].forEach(w=>{const n=+w.getAttribute('r');if(n>=9&&n<=40){if(n<9+Math.max(15,L.length))w.removeAttribute('hidden');else w.setAttribute('hidden','1')}});
  set('E43',CFG.me||'');set('F43',frL(new Date().toISOString().slice(0,10)));
  z.file(p,new XMLSerializer().serializeToString(doc));return z.generateAsync({type:'blob',compression:'DEFLATE',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
 /* --- éditeur --- */
@@ -2446,7 +2446,7 @@ function ecCardH(a){try{if(!(a.cdes||[]).length)return'';const L=echL(a).L;if(!L
 function ecWho(){try{return window.CLOUD&&ME?(ME.full_name||ME.name||ME.email||''):(CFG.me||'')}catch(e){return''}}
 function ecMat(a){const X=echL(a);a.lig=a.lig||{};X.L.forEach(x=>{const s=a.lig[x.k]=a.lig[x.k]||{};if(s.e==null)s.e=x.en;if(s.f==null)s.f=x.f})}
 /* une coche retirée garde sa date d'origine (eAt0) : en recochant, on peut la reprendre au lieu d'enregistrer aujourd'hui */
-const RP_VER='27/11/2026 13h00';
+const RP_VER='27/11/2026 13h45';
 const ecNowMo=()=>ecMo(new Date().toISOString());
 function ecTick(k,kind,on,a0,opt){const a=a0||cur;ecMat(a);const X=echL(a),x=X.L.find(y=>y.k===k);if(!x)return;const s=a.lig[k],now=new Date().toISOString(),who=ecWho();
  let keep=opt&&opt.keep;if(on&&!s.e&&s.eAt0&&opt==null&&ecMo(s.eAt0)===ecMo(now))keep=true;const k0=keep&&s.eAt0?s.eAt0:'';
@@ -3396,6 +3396,14 @@ $('#da').addEventListener('click',e=>{const b=e.target.closest('[data-aurs]');if
 /* historique : quand plusieurs fiches ont le même n° de loc, on indique de quelle fiche il s'agit */
 {const a1=aud1;aud1=function(x){let h=a1.apply(this,arguments);try{const a=rows.find(r=>r.sid===x.affaire_id);if(a&&a.loc){const nl=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');const D=rows.filter(r=>r.loc&&nl(r.loc)===nl(a.loc));
  if(D.length>1)h=h.replace('<div class="au">',`<div class="au"><span class="pill" style="--c:var(--wa)" title="Plusieurs fiches portent ce n° de loc">fiche ${D.indexOf(a)+1}/${D.length} · ${esc(String(a.sid||'').slice(0,6))}</span> `)}}catch(e){}return h}}
+/* --- diagnostic : export JSON des documents d'une loc (implantation, nomenclature calculée, données RentPlanner), pour analyser un problème --- */
+{const o=openD;openD=function(){const r=o.apply(this,arguments);try{const h=$('#docp h4');if(h&&!$('#dgx')){const b=document.createElement('button');b.id='dgx';b.className='btn sm';b.style.marginLeft='8px';b.textContent='🔍 Export diagnostic';b.title='Télécharge un fichier technique (implantation + nomenclature calculée) à envoyer pour analyser un problème';h.appendChild(b)}}catch(e){}return r}}
+$('#da').addEventListener('click',async e=>{if(!e.target.closest('#dgx')||!cur)return;const a=cur;let nl=[],ln=[],pl=null,er='';
+ try{nl=nomLines(a).map(l=>({q:l.q,t:l.t,ref:l.ref,lieu:l.lieu,key:l.key}))}catch(x){er+='nomLines: '+x.message+'\n'}
+ try{ln=lines(a).map(l=>({q:l.q,t:l.t,key:l.key}))}catch(x){er+='lines: '+x.message+'\n'}
+ try{const p=typeof plProj==='function'&&plProj(a);if(p)pl={id:p.id,name:p.name,area:p.area,rows:plRows(p).map(x=>({id:x.asset_id,name:x.as&&x.as.name,type:x.as&&x.as.type,wr:!!x.workshop_return,tn:!!x.transfer_to_next}))}}catch(x){er+='pl: '+x.message+'\n'}
+ const o={ver:RP_VER,at:new Date().toISOString(),loc:a.loc,sid:a.sid,docs:a.docs,nomenclature:nl,lignes:ln,rentplanner:pl,erreurs:er};
+ await dlBlob(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}),`diagnostic ${a.loc||'loc'}.json`)});
 
 try{
 /* ===== Thème de Noël RentPilot =====
